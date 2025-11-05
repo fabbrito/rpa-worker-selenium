@@ -257,6 +257,20 @@ Edit the first line of the Dockerfile:
 FROM python:3.12-slim-bookworm  # or any other version
 ```
 
+## Testing
+
+The repository includes a test suite to validate the functionality:
+
+```bash
+# Run the test suite
+python test_features.py
+```
+
+The test suite validates:
+- Script downloader URL parsing and filename extraction
+- Smoke test title extraction logic
+- Environment variable handling
+
 ## Troubleshooting
 
 ### Chrome/ChromeDriver Version Mismatch
