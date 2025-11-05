@@ -13,6 +13,7 @@ import os
 import sys
 import pathlib
 import requests
+import hashlib
 from urllib.parse import urlparse
 
 
@@ -64,8 +65,9 @@ def get_filename_from_url(url):
     
     # If no filename or doesn't end with .py, create one
     if not filename or not filename.endswith('.py'):
-        # Use domain + hash as filename
-        filename = f"script_{abs(hash(url))}.py"
+        # Use MD5 hash of URL for consistent filename generation
+        url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+        filename = f"script_{url_hash}.py"
     
     return filename
 

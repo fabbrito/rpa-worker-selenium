@@ -55,32 +55,47 @@ def test_smoke_test_title_extraction():
     """Test smoke test title extraction logic."""
     print("Testing smoke_test.py title extraction...")
     
+    # Set CACHE_DIR before importing to avoid permission issues
+    temp_cache = tempfile.mkdtemp()
+    os.environ['CACHE_DIR'] = temp_cache
+    
+    from smoke_test import extract_title_from_html
+    
     # Test 1: Normal HTML with title
     html_with_title = '<html><head><title>Test Title</title></head><body>Test</body></html>'
-    title = "Desconhecido"
-    if "<title>" in html_with_title and "</title>" in html_with_title:
-        title = html_with_title.split("<title>")[1].split("</title>")[0].strip()
+    title = extract_title_from_html(html_with_title)
     assert title == "Test Title", f"Failed: got '{title}'"
     print(f"  ✓ Title extraction: 'Test Title'")
     
     # Test 2: HTML without title
     html_no_title = '<html><body>No title</body></html>'
-    title = "Desconhecido"
-    if "<title>" in html_no_title and "</title>" in html_no_title:
-        title = html_no_title.split("<title>")[1].split("</title>")[0].strip()
+    title = extract_title_from_html(html_no_title)
     assert title == "Desconhecido", f"Failed: got '{title}'"
     print(f"  ✓ No title case: 'Desconhecido'")
     
     # Test 3: HTML with empty title
     html_empty_title = '<html><head><title></title></head><body>Test</body></html>'
-    title = "Desconhecido"
-    if "<title>" in html_empty_title and "</title>" in html_empty_title:
-        title = html_empty_title.split("<title>")[1].split("</title>")[0].strip()
-    # Empty string after strip
-    if not title:
-        title = "Desconhecido"
+    title = extract_title_from_html(html_empty_title)
     assert title == "Desconhecido", f"Failed: got '{title}'"
     print(f"  ✓ Empty title case: 'Desconhecido'")
+    
+    # Test 4: HTML with whitespace in title
+    html_whitespace = '<html><head><title>  Spaced  Title  </title></head><body>Test</body></html>'
+    title = extract_title_from_html(html_whitespace)
+    assert title == "Spaced Title", f"Failed: got '{title}'"
+    print(f"  ✓ Whitespace title case: 'Spaced Title'")
+    
+    # Test 5: HTML with newlines in title
+    html_newlines = '<html><head><title>Multi\nLine\nTitle</title></head><body>Test</body></html>'
+    title = extract_title_from_html(html_newlines)
+    assert title == "Multi Line Title", f"Failed: got '{title}'"
+    print(f"  ✓ Newlines in title case: 'Multi Line Title'")
+    
+    # Test 6: HTML with case-insensitive title tag
+    html_uppercase = '<html><head><TITLE>Uppercase Title</TITLE></head><body>Test</body></html>'
+    title = extract_title_from_html(html_uppercase)
+    assert title == "Uppercase Title", f"Failed: got '{title}'"
+    print(f"  ✓ Case-insensitive title: 'Uppercase Title'")
     
     print("✓ All smoke_test title extraction tests passed!\n")
 
