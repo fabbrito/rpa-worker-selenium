@@ -58,14 +58,18 @@ RUN useradd -m -d /app -u 1000 rpauser \
 WORKDIR /app
 RUN mkdir -p /app/src /app/logs /app/tmp \
     /app/.pki/nssdb \
+    /app/.cache \
+    /data \
     && chmod 1777 /app/tmp \
     && chmod 700 /app/.pki/nssdb \
+    && chmod 777 /data \
     && chown -R rpauser:rpauser /app
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN python -m pip install --upgrade --trusted-host pypi.org --trusted-host files.pythonhosted.org pip \
- && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+ && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
+ && chmod -R 777 /usr/local/lib/python3.11/site-packages/seleniumbase/drivers || true
 
 # Copy application files
 COPY . .
@@ -77,7 +81,8 @@ RUN chmod +x /app/entrypoint.sh /app/script_downloader.py /app/smoke_test.py
 ENV USE_XVFB=0 \
     USE_OPENBOX=0 \
     USE_VNC=0 \
-    VNC_PORT=5900
+    VNC_PORT=5900 \
+    XDG_CACHE_HOME=/app/.cache
 
 # Switch to non-root user
 USER rpauser
