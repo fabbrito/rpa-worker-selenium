@@ -1,3 +1,5 @@
+[![Smoke Test](https://github.com/nailtongomes/rpa-worker-selenium/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/nailtongomes/rpa-worker-selenium/actions/workflows/smoke-test.yml)
+
 # rpa-worker-selenium
 
 A production-ready Docker image for running dynamic Python scripts with Selenium automation. This image uses a multi-stage build and comes pre-configured with Chrome, ChromeDriver, and comprehensive dependencies for web automation and RPA tasks.
