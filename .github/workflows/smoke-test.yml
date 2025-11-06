@@ -133,7 +133,7 @@ jobs:
         docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.tag }} .
     
     - name: Create data directory
-      run: mkdir -p data
+      run: mkdir -p data && chmod 777 data
     
     - name: Run smoke test in container
       run: |

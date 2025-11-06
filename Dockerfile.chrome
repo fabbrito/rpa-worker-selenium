@@ -88,7 +88,8 @@ RUN mkdir -p /app/src /app/logs /app/tmp \
 # Install Python dependencies
 COPY requirements.txt .
 RUN python -m pip install --upgrade --trusted-host pypi.org --trusted-host files.pythonhosted.org pip \
- && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+ && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
+ && chmod -R 777 /usr/local/lib/python3.11/site-packages/seleniumbase/drivers || true
 
 # Copy application files
 COPY . .
