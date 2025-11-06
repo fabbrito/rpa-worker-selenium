@@ -178,7 +178,13 @@ def test_brave_example_script():
     required_imports = ['selenium', 'sys', 'os']
     
     for imp in required_imports:
-        assert any(imp in i or i in imp for i in imports if i), f"Missing import: {imp}"
+        # Check if import is present (either exact match or as part of module path)
+        found = False
+        for import_name in imports:
+            if import_name and (imp == import_name or imp in import_name or import_name.startswith(imp + '.')):
+                found = True
+                break
+        assert found, f"Missing import: {imp}"
     
     print("  ✓ All required imports present")
     
