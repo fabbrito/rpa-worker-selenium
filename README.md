@@ -346,6 +346,30 @@ docker run --rm \
 
 The smoke test tries SeleniumBase first and falls back to requests if unavailable.
 
+#### Smoke Test with Process Checks
+
+The smoke test can verify that Xvfb and PJeOffice processes are running:
+
+```bash
+# Build image with PJeOffice
+docker build -f Dockerfile.chrome --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-selenium-pje .
+
+# Run smoke test with all services and process checks
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_OPENBOX=1 \
+  -e USE_PJEOFFICE=1 \
+  -e CHECK_PROCESSES=1 \
+  -e TARGET_URL=https://example.com \
+  -v $(pwd)/data:/data \
+  rpa-worker-selenium-pje \
+  bash -c "sleep 5 && python /app/smoke_test.py"
+```
+
+The `CHECK_PROCESSES=1` flag enables verification that:
+- Xvfb is running (when `USE_XVFB=1`)
+- PJeOffice is running (when `USE_PJEOFFICE=1`)
+
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -355,6 +379,8 @@ The smoke test tries SeleniumBase first and falls back to requests if unavailabl
 | `SCRIPTS_DIR` | /app/src | Directory to save helper scripts |
 | `TARGET_URL` | https://example.com/ | URL for smoke test |
 | `CACHE_DIR` | /data | Directory for smoke test outputs |
+| `TEST_HELPERS` | 0 | Test helper scripts functionality (set to 1 to enable) |
+| `CHECK_PROCESSES` | 0 | Check if Xvfb and PJeOffice processes are alive (set to 1 to enable) |
 | `SCREEN_WIDTH` | 1366 | Virtual display width |
 | `SCREEN_HEIGHT` | 768 | Virtual display height |
 | `USE_XVFB` | 0 | Enable Xvfb virtual display (set to 1 to enable) |
