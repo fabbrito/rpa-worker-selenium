@@ -34,4 +34,4 @@ psutil==6.1.0
 pytz==2024.2
 tinydb==4.8.2
 typing_extensions==4.12.2
-
+boto3
