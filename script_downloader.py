@@ -14,8 +14,36 @@ import sys
 import pathlib
 import requests
 import hashlib
-from urllib.parse import urlparse
+import re
+from urllib.parse import urlparse, parse_qs, unquote
 
+_CONTENT_DISP_RE = re.compile(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?', re.IGNORECASE)
+
+def _sanitize(name: str) -> str:
+    # troca caracteres inválidos por "_"
+    name = re.sub(r'[\\/*?:"<>|]', "_", name)
+    # remove espaços nas pontas
+    return name.strip()
+
+def _ensure_py(name: str) -> str:
+    p = pathlib.Path(name)
+    return f"{p.stem}.py" if p.suffix.lower() != ".py" else p.name
+
+def _from_content_disposition(headers: dict | None) -> str | None:
+    if not headers:
+        return None
+    cd = None
+    # normaliza chaves
+    for k, v in headers.items():
+        if k.lower() == "content-disposition":
+            cd = v
+            break
+    if not cd:
+        return None
+    m = _CONTENT_DISP_RE.search(cd)
+    if not m:
+        return None
+    return _sanitize(unquote(m.group(1)))
 
 def download_file(url, destination_path):
     """
@@ -47,30 +75,45 @@ def download_file(url, destination_path):
         return False
 
 
-def get_filename_from_url(url):
+def get_filename_from_url(url: str) -> str:
     """
-    Extract filename from URL. If no filename is found, use a default.
-    
-    Args:
-        url: URL to extract filename from
-        
-    Returns:
-        str: Filename extracted from URL
+    Retrocompatível:
+    - se encontrar um segmento terminando em .py na URL, usa-o
+    - senão, gera script_<md5prefix>.py (igual à ideia antiga)
     """
     parsed = urlparse(url)
-    path = parsed.path
-    
-    # Get the last part of the path
-    filename = path.split('/')[-1]
-    
-    # If no filename or doesn't end with .py, create one
-    if not filename or not filename.endswith('.py'):
-        # Use MD5 hash of URL for consistent filename generation
-        url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
-        filename = f"script_{url_hash}.py"
-    
-    return filename
+    path = unquote(parsed.path or "")
+    segments = [s for s in path.split("/") if s]
 
+    # procura por .py em qualquer segmento (da direita p/ esquerda)
+    for seg in reversed(segments):
+        if seg.lower().endswith(".py"):
+            return _sanitize(Path(seg).name)
+
+    # fallback estável
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    return f"script_{url_hash}.py"
+
+
+def choose_download_name(url: str, is_primary: bool = False, headers: dict | None = None) -> str:
+    """
+    Determina o nome de arquivo para salvar em disco.
+    - is_primary=True => força main.py
+    - is_primary=False => tenta Content-Disposition; senão, usa nome vindo da URL; se não houver, fallback script_<hash>.py
+    """
+    if is_primary:
+        # principal sempre vira main.py
+        return "main.py"
+
+    # para auxiliares, dá preferência ao Content-Disposition (se tiver)
+    name = _from_content_disposition(headers)
+    if not name:
+        # usa a função retrocompatível (mantém comportamento antigo)
+        name = get_filename_from_url(url)
+
+    # garante extensão .py (caso o servidor retorne sem .py)
+    name = _ensure_py(name)
+    return _sanitize(name)
 
 def download_main_script(script_url, temp_dir="/tmp"):
     """
@@ -90,7 +133,7 @@ def download_main_script(script_url, temp_dir="/tmp"):
     temp_path = pathlib.Path(temp_dir)
     temp_path.mkdir(parents=True, exist_ok=True)
     
-    filename = get_filename_from_url(script_url)
+    filename = 'main.py' #get_filename_from_url(script_url)
     destination = temp_path / filename
     
     if download_file(script_url, destination):
