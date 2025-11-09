@@ -133,7 +133,7 @@ def download_main_script(script_url, temp_dir="/tmp"):
     temp_path = pathlib.Path(temp_dir)
     temp_path.mkdir(parents=True, exist_ok=True)
     
-    filename = 'main.py' #get_filename_from_url(script_url)
+    filename = get_filename_from_url(script_url)
     destination = temp_path / filename
     
     if download_file(script_url, destination):
