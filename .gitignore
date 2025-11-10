@@ -50,3 +50,8 @@ temp/
 
 # Data directory - test outputs
 data/
+
+# Test recordings and data directories
+test_recordings/
+test_data/
+recordings/
