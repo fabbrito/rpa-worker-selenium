@@ -19,6 +19,7 @@ A production-ready Docker image for running dynamic Python scripts with Selenium
 - 🚀 Google Chrome (specific version: 142.0.7444.59)
 - 📦 ChromeDriver (matched to Chrome version from Chrome for Testing)
 - 🖥️ Optional Xvfb (virtual display), OpenBox window manager, and VNC support
+- 🎥 Optional screen recording with FFmpeg for debugging
 - ⚖️ Optional PJeOffice support (for Brazilian legal system automations)
 - 🔧 Pre-configured for RPA and automation tasks
 - 📊 Comprehensive packages: requests, beautifulsoup4, pandas, openpyxl, PyAutoGUI, and more
@@ -315,6 +316,58 @@ docker run --rm \
   rpa-worker-selenium-pje my_script.py
 ```
 
+### Screen Recording for Debugging
+
+The image supports optional screen recording to help debug automation issues, especially when working with PJeOffice or visual interactions.
+
+#### Enable Screen Recording
+
+Screen recording requires Xvfb to be enabled:
+
+```bash
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_SCREEN_RECORDING=1 \
+  -v $(pwd)/recordings:/app/recordings \
+  rpa-worker-selenium my_script.py
+```
+
+The recording will be saved as an MP4 file in `/app/recordings` with a timestamp in the filename (e.g., `recording_20241110_120345.mp4`).
+
+#### Custom Recording Directory and Filename
+
+```bash
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_SCREEN_RECORDING=1 \
+  -e RECORDING_DIR=/data/recordings \
+  -e RECORDING_FILENAME=my_automation.mp4 \
+  -v $(pwd)/data:/data \
+  rpa-worker-selenium my_script.py
+```
+
+#### Recording with PJeOffice
+
+To debug PJeOffice interactions:
+
+```bash
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_OPENBOX=1 \
+  -e USE_PJEOFFICE=1 \
+  -e USE_SCREEN_RECORDING=1 \
+  -v $(pwd)/recordings:/app/recordings \
+  rpa-worker-selenium-pje my_script.py
+```
+
+**Recording Details:**
+- Format: MP4 (H.264 codec)
+- Frame rate: 15 fps (optimized for file size)
+- Resolution: Matches `SCREEN_WIDTH` and `SCREEN_HEIGHT`
+- The recording starts when the container starts and stops when the container exits
+
+**Note:** Screen recording requires Xvfb to be running (`USE_XVFB=1`). If Xvfb is not enabled, recording will be skipped with a warning message.
+
 ### Default Behavior (Lightweight Mode)
 
 By default, all optional services are disabled for lightweight, headless operation:
@@ -322,6 +375,7 @@ By default, all optional services are disabled for lightweight, headless operati
 - `USE_OPENBOX=0` - No window manager
 - `USE_PJEOFFICE=0` - PJeOffice not started (even if installed)
 - `USE_VNC=0` - No VNC server
+- `USE_SCREEN_RECORDING=0` - No screen recording
 
 This allows the container to run with minimal resources when these features are not needed.
 
@@ -407,8 +461,11 @@ The `CHECK_PROCESSES=1` flag enables verification that:
 | `USE_OPENBOX` | 0 | Enable OpenBox window manager (set to 1 to enable) |
 | `USE_PJEOFFICE` | 0 | Enable PJeOffice (set to 1 to enable, requires BUILD_PJEOFFICE=1 at build time) |
 | `USE_VNC` | 0 | Enable VNC server (set to 1 to enable) |
+| `USE_SCREEN_RECORDING` | 0 | Enable screen recording (set to 1 to enable, requires USE_XVFB=1) |
 | `VNC_PORT` | 5900 | VNC server port |
 | `DISPLAY` | :99 | X11 display number |
+| `RECORDING_DIR` | /app/recordings | Directory to save screen recordings |
+| `RECORDING_FILENAME` | recording_YYYYMMDD_HHMMSS.mp4 | Filename for screen recording (auto-generated with timestamp if not specified) |
 | `PJEOFFICE_CONFIG_DIR` | /app/.pjeoffice-pro | Directory for PJeOffice configuration files |
 | `PJEOFFICE_CONFIG_FILE` | /app/.pjeoffice-pro/pjeoffice-pro.config | Full path to PJeOffice configuration file |
 | `PJEOFFICE_EXECUTABLE` | /opt/pjeoffice/pjeoffice-pro.sh | Path to PJeOffice executable script |
