@@ -163,6 +163,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     x11-apps \
     # PolicyKit for authentication dialogs
     policykit-1 \
+    openjdk-17-jre-headless \
     && apt-get install -y --fix-missing zip \
     && rm -rf /var/lib/apt/lists/*
 
