@@ -4,11 +4,12 @@
 
 A production-ready Docker image for running dynamic Python scripts with Selenium automation. This image uses a multi-stage build and comes pre-configured with Chrome, ChromeDriver, and comprehensive dependencies for web automation and RPA tasks.
 
-> **Note**: This repository provides four Dockerfile versions:
+> **Note**: This repository provides five Dockerfile versions:
 > - `Dockerfile` (default) - Uses Chromium from Debian repos, easier to build
 > - `Dockerfile.chrome` - Uses Google Chrome with matched ChromeDriver for production
 > - `Dockerfile.brave` - Uses Brave browser for privacy-focused automation
 > - `Dockerfile.firefox` - Uses Firefox browser with GeckoDriver for Mozilla automation
+> - `Dockerfile.ubuntu` - Ubuntu-based with comprehensive GUI/window management for PJeOffice
 > 
 > See [DOCKERFILE_VERSIONS.md](DOCKERFILE_VERSIONS.md) for details on which to use.
 
@@ -53,10 +54,16 @@ docker build -f Dockerfile.brave -t rpa-worker-selenium-brave .
 docker build -f Dockerfile.firefox -t rpa-worker-selenium-firefox .
 ```
 
-> **Note:** Building `Dockerfile.chrome`, `Dockerfile.brave`, and `Dockerfile.firefox` requires internet access to specific domains during build:
+**With Ubuntu (Enhanced GUI support for PJeOffice):**
+```bash
+docker build -f Dockerfile.ubuntu -t rpa-worker-selenium-ubuntu .
+```
+
+> **Note:** Building `Dockerfile.chrome`, `Dockerfile.brave`, `Dockerfile.firefox`, and `Dockerfile.ubuntu` requires internet access to specific domains during build:
 > - Chrome: `dl.google.com`, `storage.googleapis.com`
 > - Brave: `brave-browser-apt-release.s3.brave.com`, `storage.googleapis.com`, `googlechromelabs.github.io`
 > - Firefox: `ftp.mozilla.org`, `github.com`
+> - Ubuntu: `dl.google.com`, `storage.googleapis.com`
 > 
 > If you're behind a corporate firewall or in a restricted network, use the default `Dockerfile` (Chromium) instead.
 
@@ -185,6 +192,36 @@ Or use the included example script:
 docker run --rm rpa-worker-selenium-firefox example_script_firefox.py
 ```
 
+### Using Ubuntu Version for PJeOffice and Enhanced GUI Support
+
+The Ubuntu-based Dockerfile is specifically designed for handling complex GUI interactions, including PJeOffice certificate dialogs:
+
+```bash
+# Build with PJeOffice support
+docker build -f Dockerfile.ubuntu --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-selenium-ubuntu-pje .
+
+# Run with full GUI support
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_OPENBOX=1 \
+  -e USE_PJEOFFICE=1 \
+  rpa-worker-selenium-ubuntu-pje my_script.py
+```
+
+This version includes:
+- Full Ubuntu 22.04 LTS base (not Debian slim)
+- Comprehensive desktop environment libraries
+- Enhanced window management tools (wmctrl, xdotool, xautomation)
+- D-Bus and PolicyKit for authentication dialogs
+- AT-SPI accessibility support
+- PulseAudio for multimedia dialogs
+- Complete GTK2/GTK3 support
+
+Use this version when:
+- You need to handle PJeOffice certificate password dialogs
+- Your code works on Ubuntu but has issues in slim containers
+- You need maximum GUI compatibility for complex window interactions
+
 ### Using SeleniumBase
 
 ```python
@@ -245,9 +282,14 @@ docker build -f Dockerfile.firefox --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-s
 
 # Brave variant
 docker build -f Dockerfile.brave --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-selenium-pje .
+
+# Ubuntu variant (recommended for PJeOffice certificate dialogs)
+docker build -f Dockerfile.ubuntu --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-selenium-ubuntu-pje .
 ```
 
 **Note:** PJeOffice download requires access to `pje-office.pje.jus.br` during build.
+
+**Recommendation for PJeOffice:** If you're experiencing issues with certificate password dialogs, use the Ubuntu variant (`Dockerfile.ubuntu`). It includes comprehensive GUI libraries and window management tools specifically designed to handle these types of interactions.
 
 ### Running with Optional Services
 

@@ -1,0 +1,253 @@
+# rpa-worker-selenium Dockerfile (Ubuntu Desktop)
+# Full Ubuntu-based image with comprehensive GUI/window management support
+# Optimized for handling PJeOffice certificate dialogs and complex window interactions
+
+# ---------- STAGE 1: builder
+FROM ubuntu:22.04 AS builder
+
+ARG CHROME_VERSION=142.0.7444.59
+ARG BUILD_PJEOFFICE=0
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    unzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /downloads
+
+# Download Chrome and ChromeDriver
+RUN curl --retry 5 --retry-delay 10 -Lo "chrome.deb" "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
+    && curl --retry 5 --retry-delay 10 -fsSL "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip" -o chromedriver.zip \
+    && unzip chromedriver.zip
+
+# ---------- STAGE 2: runtime
+FROM ubuntu:22.04
+
+# Pass build argument to runtime stage
+ARG BUILD_PJEOFFICE=0
+
+LABEL maintainer="nailtongsilva@gmail.com" \
+      version="1.0" \
+      description="Ubuntu-based Selenium with comprehensive GUI/window management for PJeOffice and RPA"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+    DISPLAY=:99 \
+    SCREEN_WIDTH=1366 \
+    SCREEN_HEIGHT=768 \
+    HOME=/app \
+    TZ=America/Sao_Paulo
+
+# Install core system dependencies and desktop environment components
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Core system utilities
+    software-properties-common \
+    ca-certificates \
+    gnupg \
+    curl \
+    wget \
+    unzip \
+    zip \
+    bzip2 \
+    xz-utils \
+    # Python and build tools
+    python3.11 \
+    python3-pip \
+    python3-dev \
+    build-essential \
+    # X11 and display management
+    xvfb \
+    x11vnc \
+    x11-utils \
+    x11-xserver-utils \
+    xserver-xorg-core \
+    xserver-xorg-video-dummy \
+    # Window managers and desktop components
+    openbox \
+    obconf \
+    xterm \
+    # Font rendering and internationalization
+    fontconfig \
+    fonts-liberation \
+    fonts-dejavu-core \
+    fonts-freefont-ttf \
+    fonts-noto \
+    fonts-noto-color-emoji \
+    # GUI libraries (comprehensive set for window handling)
+    libgtk-3-0 \
+    libgtk2.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libglib2.0-0 \
+    libdbus-1-3 \
+    libdbus-glib-1-2 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxt6 \
+    libxtst6 \
+    # Graphics and rendering
+    libgl1 \
+    libglx0 \
+    libglu1-mesa \
+    mesa-utils \
+    libvulkan1 \
+    # Audio support (required by some certificate dialog boxes)
+    libasound2 \
+    pulseaudio \
+    # NSS and certificate handling
+    libnss3 \
+    libnss3-tools \
+    libnspr4 \
+    p11-kit \
+    p11-kit-modules \
+    # Additional desktop utilities for window management
+    wmctrl \
+    xdotool \
+    xautomation \
+    xclip \
+    xsel \
+    # Process management
+    procps \
+    psmisc \
+    # Networking
+    net-tools \
+    iputils-ping \
+    # Cryptography and certificate tools
+    openssl \
+    libssl3 \
+    # Cups for printing support (sometimes needed for certificate dialogs)
+    libcups2 \
+    # AT-SPI accessibility (required for some GTK dialogs)
+    at-spi2-core \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    # Cairo graphics
+    libcairo2 \
+    libcairo-gobject2 \
+    libpangocairo-1.0-0 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    # Additional dependencies
+    libu2f-udev \
+    libappindicator3-1 \
+    libgbm1 \
+    libdrm2 \
+    # Image processing
+    imagemagick \
+    ghostscript \
+    # Security tools
+    sudo \
+    # Media codecs and processing
+    ffmpeg \
+    # D-Bus for inter-process communication (critical for dialogs)
+    dbus \
+    dbus-x11 \
+    # Additional X11 applications for testing
+    x11-apps \
+    # PolicyKit for authentication dialogs
+    policykit-1 \
+    && apt-get install -y --fix-missing zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Chrome and ChromeDriver from builder stage
+COPY --from=builder /downloads/chrome.deb /tmp/
+COPY --from=builder /downloads/chromedriver-linux64/chromedriver /usr/local/bin
+
+# Install Chrome
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/chrome.deb \
+    && rm -rf /var/lib/apt/lists/* /tmp/chrome.deb \
+    && chmod +x /usr/local/bin/chromedriver
+
+# Create symlinks for Python
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Create non-root user with proper groups for GUI access
+RUN useradd -m -d /app -u 1000 -s /bin/bash rpauser \
+    && echo "rpauser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+    && usermod -aG audio,video,render rpauser
+
+# Set up working directory structure
+WORKDIR /app
+RUN mkdir -p /app/src /app/logs /app/tmp /app/recordings \
+    /app/.pki/nssdb \
+    /app/.cache \
+    /app/.config \
+    /app/.local/share \
+    /data \
+    && chmod 1777 /app/tmp \
+    && chmod 700 /app/.pki/nssdb \
+    && chmod 777 /data \
+    && chmod 777 /app/recordings \
+    && chown -R rpauser:rpauser /app
+
+# Optional: Install PJeOffice (controlled by BUILD_PJEOFFICE build argument)
+RUN if [ "$BUILD_PJEOFFICE" = "1" ]; then \
+    mkdir -p /opt/pjeoffice && \
+    cd /tmp && \
+    curl -Lo "pjeoffice.zip" "https://pje-office.pje.jus.br/pro/pjeoffice-pro-v2.5.16u-linux_x64.zip" && \
+    unzip pjeoffice.zip && \
+    cp -r pjeoffice-pro/* /opt/pjeoffice/ && \
+    rm -rf pjeoffice.zip pjeoffice-pro && \
+    chown -R rpauser:rpauser /opt/pjeoffice && \
+    chmod -R 755 /opt/pjeoffice && \
+    chmod +x /opt/pjeoffice/pjeoffice-pro.sh && \
+    mkdir -p /app/.pjeoffice-pro && \
+    chown -R rpauser:rpauser /app/.pjeoffice-pro && \
+    chmod -R 755 /app/.pjeoffice-pro; \
+fi
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN python3 -m pip install --upgrade --trusted-host pypi.org --trusted-host files.pythonhosted.org pip \
+    && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
+    && chmod -R 777 /usr/local/lib/python3.11/site-packages/seleniumbase/drivers || true
+
+# Copy application files
+COPY . .
+
+# Make entrypoint script executable
+RUN chmod +x /app/entrypoint.sh /app/script_downloader.py /app/smoke_test.py
+
+# Set up D-Bus for GUI applications
+RUN mkdir -p /var/run/dbus \
+    && chown rpauser:rpauser /var/run/dbus
+
+# Environment variables for control (all optional; defaults to lightweight/headless)
+ENV USE_XVFB=0 \
+    USE_OPENBOX=0 \
+    USE_VNC=0 \
+    USE_PJEOFFICE=0 \
+    USE_SCREEN_RECORDING=0 \
+    VNC_PORT=5900 \
+    RECORDING_DIR=/app/recordings \
+    XDG_CACHE_HOME=/app/.cache \
+    XDG_CONFIG_HOME=/app/.config \
+    XDG_DATA_HOME=/app/.local/share \
+    DBUS_SESSION_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
+
+# Switch to non-root user
+USER rpauser
+
+# Set up entrypoint for dynamic script execution with download support
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Default command (can be overridden)
+CMD ["python", "--version"]
