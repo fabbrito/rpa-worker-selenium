@@ -95,6 +95,13 @@ jobs:
     - name: Run browser WebDriver tests
       run: python test_browser_drivers.py
     
+    - name: Run full smoke test with all browsers
+      env:
+        TARGET_URL: https://example.com
+        CACHE_DIR: ./data
+        TEST_ALL_BROWSERS: "1"
+      run: python full_smoke_test.py
+    
     - name: Upload smoke test artifacts
       if: always()
       uses: actions/upload-artifact@v4
