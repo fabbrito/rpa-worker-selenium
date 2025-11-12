@@ -1,6 +1,6 @@
 # Dockerfile Versions
 
-This repository provides four Dockerfile versions:
+This repository provides five Dockerfile versions:
 
 ## 1. Dockerfile (Default - Chromium from Debian repos)
 
@@ -107,5 +107,58 @@ docker run --rm rpa-worker-selenium-firefox example_script_firefox.py
   - You need Mozilla-specific WebDriver features
   - You're validating cross-browser compatibility
   - You prefer Firefox's rendering and standards compliance
+
+## 5. Dockerfile.ubuntu (Ubuntu Desktop - Enhanced GUI/Window Management)
+
+**Recommended for: PJeOffice certificate dialogs, complex window interactions, GUI automation, maximum Ubuntu compatibility**
+
+- Uses Ubuntu 22.04 LTS as base image (instead of Debian slim)
+- Comprehensive desktop environment and GUI libraries
+- Enhanced window management tools (wmctrl, xdotool, xautomation)
+- Full GTK2/GTK3 support for certificate and authentication dialogs
+- D-Bus and PolicyKit support for system dialogs
+- AT-SPI accessibility for complex GUI interactions
+- Audio support (PulseAudio) for multimedia dialogs
+- More closely matches native Ubuntu development environment
+- Larger image size but maximum compatibility
+- **Requires internet access to dl.google.com and storage.googleapis.com during build**
+
+**Build command:**
+```bash
+docker build -f Dockerfile.ubuntu -t rpa-worker-selenium-ubuntu .
+```
+
+**Build with PJeOffice support:**
+```bash
+docker build -f Dockerfile.ubuntu --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-selenium-ubuntu-pje .
+```
+
+**Example usage:**
+```bash
+# Basic usage
+docker run --rm rpa-worker-selenium-ubuntu example_script.py
+
+# With GUI services enabled for PJeOffice
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_OPENBOX=1 \
+  -e USE_PJEOFFICE=1 \
+  rpa-worker-selenium-ubuntu-pje my_pjeoffice_script.py
+```
+
+**Note:** This image is specifically designed to handle:
+- PJeOffice certificate password dialogs
+- Complex window interactions requiring full desktop environment
+- GTK-based authentication prompts
+- Applications requiring complete Ubuntu environment compatibility
+
+- **Use `Dockerfile.ubuntu`** if:
+  - You need to handle PJeOffice certificate password dialogs
+  - You're experiencing window management issues with other images
+  - You need maximum Ubuntu environment compatibility
+  - Your Python code runs perfectly on Ubuntu but has issues in slim containers
+  - You need full desktop environment support for complex GUI interactions
+  - You're working with GTK-based authentication dialogs
+  - Image size is less important than compatibility
 
 All versions include all the same Python packages and provide the same functionality for Selenium automation.

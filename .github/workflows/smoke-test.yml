@@ -120,6 +120,9 @@ jobs:
           - dockerfile: Dockerfile.brave
             name: brave
             tag: rpa-worker-selenium:brave
+          - dockerfile: Dockerfile.ubuntu
+            name: ubuntu
+            tag: rpa-worker-selenium:ubuntu
     
     steps:
     - name: Checkout code
@@ -163,6 +166,9 @@ jobs:
           - dockerfile: Dockerfile.chrome
             name: chrome-pjeoffice
             tag: rpa-worker-selenium:chrome-pje
+          - dockerfile: Dockerfile.ubuntu
+            name: ubuntu-pjeoffice
+            tag: rpa-worker-selenium:ubuntu-pje
     
     steps:
     - name: Checkout code
