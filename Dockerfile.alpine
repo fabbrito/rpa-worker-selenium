@@ -78,12 +78,12 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     && pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
 
 # Copy application files
-COPY entrypoint.sh script_downloader.py smoke_test.py alpine_smoke_test.py ./
+COPY entrypoint.sh script_downloader.py smoke_test.py alpine_smoke_test.py test_browser_drivers.py ./
 COPY example_*.py ./
 COPY full_smoke_test.py ./
 
 # Make scripts executable
-RUN chmod +x /app/entrypoint.sh /app/script_downloader.py /app/smoke_test.py /app/alpine_smoke_test.py
+RUN chmod +x /app/entrypoint.sh /app/script_downloader.py /app/smoke_test.py /app/alpine_smoke_test.py /app/test_browser_drivers.py
 
 # Environment variables for control (all disabled by default for serverless)
 ENV USE_XVFB=0 \
