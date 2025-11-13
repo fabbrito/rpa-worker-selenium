@@ -1,0 +1,153 @@
+# rpa-worker-selenium Dockerfile.alpine
+# Lightweight Alpine-based image for serverless environments (Lambda, Cloud Run)
+# Includes Chrome, Firefox, and Selenium base for RPA automation
+# NO PJeOffice or GUI features - optimized for headless operation only
+
+# ---------- STAGE 1: builder
+FROM python:3.11-alpine AS builder
+
+# Build arguments
+ARG CHROME_VERSION=131.0.6778.85
+ARG FIREFOX_VERSION=133.0
+ARG GECKODRIVER_VERSION=0.36.0
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Install build dependencies
+RUN apk add --no-cache \
+    curl \
+    wget \
+    unzip \
+    tar \
+    xz \
+    ca-certificates
+
+WORKDIR /downloads
+
+# Download ChromeDriver
+RUN curl -fsSL "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip" -o chromedriver.zip \
+    && unzip chromedriver.zip \
+    && chmod +x chromedriver-linux64/chromedriver
+
+# Download GeckoDriver (Firefox)
+RUN curl --retry 5 --retry-delay 10 -Lo "geckodriver.tar.gz" \
+    "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
+    && tar -zxf geckodriver.tar.gz \
+    && chmod +x geckodriver
+
+# ---------- STAGE 2: runtime
+FROM python:3.11-alpine
+
+LABEL maintainer="nailtongsilva@gmail.com" \
+      version="1.0" \
+      description="Alpine-based lightweight Selenium with Chrome, Firefox for serverless RPA"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    DISPLAY=:99 \
+    SCREEN_WIDTH=1366 \
+    SCREEN_HEIGHT=768 \
+    HOME=/app \
+    MOZ_ALLOW_ROOT=1 \
+    PATH=/usr/lib/chromium:$PATH
+
+# Install runtime dependencies for browsers and automation
+# Alpine uses apk package manager
+RUN apk add --no-cache \
+    # Chromium browser and driver (from Alpine repos)
+    chromium \
+    chromium-chromedriver \
+    # Firefox browser
+    firefox \
+    # X11 and display (minimal)
+    xvfb-run \
+    xvfb \
+    # Libraries needed by Selenium and browsers
+    libgcc \
+    libstdc++ \
+    libx11 \
+    libxcb \
+    libxcomposite \
+    libxdamage \
+    libxext \
+    libxfixes \
+    libxrandr \
+    libxrender \
+    libxtst \
+    libxi \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto-emoji \
+    # Process management
+    procps \
+    # Networking utilities
+    curl \
+    wget \
+    # Archive tools
+    zip \
+    unzip \
+    # Required shared libraries
+    gtk+3.0 \
+    dbus-libs \
+    mesa-gl \
+    mesa-dri-gallium \
+    # Additional libs for Selenium
+    eudev-libs \
+    && rm -rf /var/cache/apk/*
+
+# Copy ChromeDriver and GeckoDriver from builder stage
+COPY --from=builder /downloads/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+COPY --from=builder /downloads/geckodriver /usr/local/bin/geckodriver
+
+# Ensure drivers are executable
+RUN chmod +x /usr/local/bin/chromedriver /usr/local/bin/geckodriver
+
+# Create symbolic links for compatibility
+RUN ln -sf /usr/bin/chromium-browser /usr/bin/google-chrome \
+    && ln -sf /usr/bin/chromium-browser /usr/bin/chrome \
+    && ln -sf /usr/lib/chromium/chromedriver /usr/bin/chromedriver-alpine
+
+# Create working directory structure
+WORKDIR /app
+RUN mkdir -p /app/src /app/logs /app/tmp /data \
+    && chmod 1777 /app/tmp \
+    && chmod 777 /data
+
+# Install Python dependencies (optimized with pip cache mount)
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install --upgrade pip \
+    && pip install -r requirements.txt
+
+# Copy application files
+COPY entrypoint.sh script_downloader.py smoke_test.py alpine_smoke_test.py ./
+COPY example_*.py ./
+COPY full_smoke_test.py ./
+
+# Make scripts executable
+RUN chmod +x /app/entrypoint.sh /app/script_downloader.py /app/smoke_test.py /app/alpine_smoke_test.py
+
+# Environment variables for control (all disabled by default for serverless)
+ENV USE_XVFB=0 \
+    USE_OPENBOX=0 \
+    USE_VNC=0 \
+    USE_PJEOFFICE=0 \
+    USE_SCREEN_RECORDING=0 \
+    XDG_CACHE_HOME=/app/.cache
+
+# Health check to ensure browsers are available
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD chromium-browser --version && firefox --version || exit 1
+
+# Set up entrypoint for dynamic script execution
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Default command
+CMD ["python", "--version"]
