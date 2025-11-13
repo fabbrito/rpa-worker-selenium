@@ -165,8 +165,6 @@ def test_firefox_webdriver():
         firefox_options.add_argument('--headless')
         firefox_options.add_argument('--no-sandbox')
         firefox_options.add_argument('--disable-dev-shm-usage')
-        firefox_options.add_argument('--width=1366')
-        firefox_options.add_argument('--height=768')
         
         # Try to find geckodriver in common locations
         geckodriver_path = None
@@ -176,7 +174,7 @@ def test_firefox_webdriver():
                 break
         
         if geckodriver_path:
-            service = Service(geckodriver_path)
+            service = Service() # geckodriver_path
             driver = webdriver.Firefox(service=service, options=firefox_options)
         else:
             # Let Selenium auto-detect the driver
