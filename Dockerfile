@@ -22,12 +22,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /downloads
 
 # Download Chrome and ChromeDriver only if BROWSER_TYPE is chrome
+# Create placeholder files for COPY compatibility when not building chrome
 RUN if [ "$BROWSER_TYPE" = "chrome" ]; then \
         echo "Downloading Google Chrome..."; \
         wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; \
         CHROMEDRIVER_VERSION=$(curl -sS https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE) && \
         curl -Lo "chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip" && \
         unzip chromedriver-linux64.zip; \
+    else \
+        echo "Creating placeholder files for non-chrome builds"; \
+        touch google-chrome-stable_current_amd64.deb; \
+        mkdir -p chromedriver-linux64 && touch chromedriver-linux64/chromedriver; \
     fi
 
 # ============================
@@ -124,7 +129,7 @@ RUN if [ "$BROWSER_TYPE" = "chrome" ]; then \
     fi
 
 # For Chrome: Copy ChromeDriver from builder
-COPY --from=builder /downloads/chromedriver-linux64/chromedriver /tmp/chromedriver-from-builder 2>/dev/null || touch /tmp/chromedriver-from-builder
+COPY --from=builder /downloads/chromedriver-linux64/chromedriver /tmp/chromedriver-from-builder
 RUN if [ "$BROWSER_TYPE" = "chrome" ] && [ -s /tmp/chromedriver-from-builder ]; then \
         mv /tmp/chromedriver-from-builder /usr/local/bin/chromedriver && \
         chmod +x /usr/local/bin/chromedriver; \
@@ -133,7 +138,7 @@ RUN if [ "$BROWSER_TYPE" = "chrome" ] && [ -s /tmp/chromedriver-from-builder ]; 
     fi
 
 # For Chrome: Copy and install Chrome .deb from builder
-COPY --from=builder /downloads/google-chrome-stable_current_amd64.deb /tmp/chrome.deb 2>/dev/null || touch /tmp/chrome.deb
+COPY --from=builder /downloads/google-chrome-stable_current_amd64.deb /tmp/chrome.deb
 RUN if [ "$BROWSER_TYPE" = "chrome" ] && [ -s /tmp/chrome.deb ]; then \
         apt-get update && \
         apt-get install -y --no-install-recommends /tmp/chrome.deb && \
