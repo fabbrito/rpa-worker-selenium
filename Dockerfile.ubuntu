@@ -197,7 +197,9 @@ RUN ln -s /opt/firefox/firefox /usr/local/bin/firefox \
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # Create non-root user with proper groups for GUI access
-RUN useradd -m -d /app -u 1000 -s /bin/bash rpauser \
+# Remove existing ubuntu user to avoid UID conflict
+RUN userdel -r ubuntu 2>/dev/null || true \
+    && useradd -m -d /app -u 1000 -s /bin/bash rpauser \
     && echo "rpauser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
     && usermod -aG audio,video,render rpauser
 
