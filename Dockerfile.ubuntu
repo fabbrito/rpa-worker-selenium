@@ -3,7 +3,7 @@
 # Optimized for handling PJeOffice certificate dialogs and complex window interactions
 
 # ---------- STAGE 1: builder
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 ARG CHROME_VERSION=142.0.7444.162
 ARG FIREFOX_VERSION=145.0
@@ -39,14 +39,14 @@ RUN curl --retry 5 --retry-delay 10 -Lo "firefox.tar.xz" \
     && tar -zxf geckodriver.tar.gz
 
 # ---------- STAGE 2: runtime
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Pass build argument to runtime stage
 ARG BUILD_PJEOFFICE=0
 
 LABEL maintainer="nailtongsilva@gmail.com" \
-      version="1.0" \
-      description="Ubuntu-based Selenium with comprehensive GUI/window management for PJeOffice and RPA"
+      version="2.0" \
+      description="Ubuntu 24.04 LTS Selenium with comprehensive GUI/window management for PJeOffice and RPA"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -63,7 +63,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Install core system dependencies and desktop environment components
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Core system utilities
-    software-properties-common \
     ca-certificates \
     gnupg \
     curl \
@@ -73,10 +72,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bzip2 \
     xz-utils \
     # Python and build tools
-    python3.11 \
+    python3 \
     python3-pip \
     python3-dev \
     python3-tk \
+    python3-venv \
     build-essential \
     # X11 and display management
     xvfb \
@@ -87,13 +87,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xserver-xorg-video-dummy \
     # Window managers and desktop components
     openbox \
-    obconf \
     xterm \
     # Font rendering and internationalization
     fontconfig \
     fonts-liberation \
     fonts-dejavu-core \
-    fonts-freefont-ttf \
     fonts-noto \
     fonts-noto-color-emoji \
     # GUI libraries (comprehensive set for window handling)
@@ -124,7 +122,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglx0 \
     libglu1-mesa \
-    mesa-utils \
     libvulkan1 \
     # Audio support (required by some certificate dialog boxes)
     libasound2 \
@@ -140,16 +137,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdotool \
     xautomation \
     xclip \
-    xsel \
     # Process management
     procps \
     psmisc \
-    # Networking
-    net-tools \
-    iputils-ping \
     # Cryptography and certificate tools
     openssl \
-    libssl3 \
     # Cups for printing support (sometimes needed for certificate dialogs)
     libcups2 \
     # AT-SPI accessibility (required for some GTK dialogs)
@@ -177,11 +169,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # D-Bus for inter-process communication (critical for dialogs)
     dbus \
     dbus-x11 \
-    # Additional X11 applications for testing
-    x11-apps \
     # PolicyKit for authentication dialogs
     policykit-1 \
-    openjdk-17-jre-headless \
+    # Java runtime for applets
+    openjdk-21-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Chrome and ChromeDriver from builder stage
@@ -202,9 +193,8 @@ RUN ln -s /opt/chrome/chrome /usr/local/bin/chrome \
 RUN ln -s /opt/firefox/firefox /usr/local/bin/firefox \
     && chmod +x /usr/local/bin/geckodriver
 
-# Create symlinks for Python
-RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.11 /usr/bin/python
+# Create symlinks for Python (Ubuntu 24.04 uses Python 3.12 by default)
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # Create non-root user with proper groups for GUI access
 RUN useradd -m -d /app -u 1000 -s /bin/bash rpauser \
@@ -255,9 +245,9 @@ fi
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN python3 -m pip install --upgrade --trusted-host pypi.org --trusted-host files.pythonhosted.org pip \
-    && pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
-    && chmod -R 777 /usr/local/lib/python3.11/dist-packages/seleniumbase/drivers || true
+RUN python3 -m pip install --upgrade --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org pip \
+    && pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
+    && chmod -R 777 /usr/local/lib/python*/dist-packages/seleniumbase/drivers || true
 
 # Copy application files
 COPY . .
@@ -284,6 +274,10 @@ ENV USE_XVFB=0 \
     XDG_CACHE_HOME=/app/.cache \
     XDG_CONFIG_HOME=/app/.config \
     XDG_DATA_HOME=/app/.local/share
+
+# Health check to ensure browsers are available
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD chrome --version && firefox --version || exit 1
 
 # Run as root user (rpauser kept for compatibility but not used)
 # USER rpauser

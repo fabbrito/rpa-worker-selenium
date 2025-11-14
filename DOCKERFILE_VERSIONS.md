@@ -65,7 +65,7 @@ docker run --rm rpa-worker-selenium-firefox example_script_firefox.py
 
 **ENHANCED**: Now supports both Chrome and Firefox in a single image!
 
-- Uses Ubuntu 22.04 LTS as base image (instead of Debian slim)
+- Uses Ubuntu 24.04 LTS as base image (instead of Debian slim)
 - **NEW**: Includes both Chrome and Firefox browsers
 - **NEW**: Includes both ChromeDriver and GeckoDriver
 - Comprehensive desktop environment and GUI libraries
@@ -76,6 +76,8 @@ docker run --rm rpa-worker-selenium-firefox example_script_firefox.py
 - Audio support (PulseAudio) for multimedia dialogs
 - More closely matches native Ubuntu development environment
 - Larger image size but maximum compatibility
+- **Java 21 runtime for applets and signing**
+- Health check to verify browser availability
 - **Requires internet access to `storage.googleapis.com`, `ftp.mozilla.org`, `github.com` during build**
 
 **Build command:**
