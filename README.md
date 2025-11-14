@@ -238,13 +238,14 @@ docker run --rm \
 ```
 
 This version includes:
-- Full Ubuntu 22.04 LTS base (not Debian slim)
+- Full Ubuntu 24.04 LTS base (not Debian slim)
 - Comprehensive desktop environment libraries
 - Enhanced window management tools (wmctrl, xdotool, xautomation)
 - D-Bus and PolicyKit for authentication dialogs
 - AT-SPI accessibility support
 - PulseAudio for multimedia dialogs
 - Complete GTK2/GTK3 support
+- Java 21 runtime for applets and signing
 
 Use this version when:
 - You need to handle PJeOffice certificate password dialogs
