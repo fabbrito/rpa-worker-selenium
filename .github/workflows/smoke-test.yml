@@ -95,6 +95,24 @@ jobs:
     - name: Run browser WebDriver tests
       run: python test_browser_drivers.py
     
+    - name: Run noVNC tests
+      run: python test_novnc.py
+    
+    - name: Run VNC tests
+      run: python test_vnc.py
+    
+    - name: Run VNC integration tests
+      run: python test_vnc_integration.py
+    
+    - name: Run entrypoint tests
+      run: python test_entrypoint.py
+    
+    - name: Run Caddy config tests
+      run: python test_caddy_config.py
+    
+    - name: Run full smoke test unit tests
+      run: python test_full_smoke_test.py
+    
     - name: Run full smoke test with all browsers
       env:
         TARGET_URL: https://example.com

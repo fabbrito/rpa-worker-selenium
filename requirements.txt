@@ -35,3 +35,4 @@ pytz==2024.2
 tinydb==4.8.2
 typing_extensions==4.12.2
 boto3
+pyyaml>=6.0

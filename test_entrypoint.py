@@ -155,7 +155,8 @@ def main():
     results.append(check_pjeoffice_env_vars('entrypoint.sh'))
     
     # Test Dockerfiles
-    dockerfiles = ['Dockerfile', 'Dockerfile.chrome', 'Dockerfile.firefox', 'Dockerfile.brave']
+    # Note: Dockerfile.chrome and Dockerfile.brave are deprecated and skipped
+    dockerfiles = ['Dockerfile', 'Dockerfile.firefox']
     
     for dockerfile in dockerfiles:
         print(f"\n5. Testing {dockerfile}...")
