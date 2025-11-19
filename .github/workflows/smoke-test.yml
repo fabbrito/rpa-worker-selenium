@@ -148,7 +148,7 @@ jobs:
             browser_type: ""
             name: firefox
             tag: rpa-worker-selenium:firefox
-          - dockerfile: Dockerfile.ubuntu
+          - dockerfile: Dockerfile.trixie
             browser_type: ""
             name: debian
             tag: rpa-worker-selenium:debian
@@ -223,7 +223,7 @@ jobs:
             browser_type: chrome
             name: chrome-pjeoffice
             tag: rpa-worker-selenium:chrome-pje
-          - dockerfile: Dockerfile.ubuntu
+          - dockerfile: Dockerfile.trixie
             browser_type: ""
             name: debian-pjeoffice
             tag: rpa-worker-selenium:debian-pje
@@ -351,7 +351,7 @@ jobs:
             browser_type: chrome
             name: chrome-novnc
             tag: rpa-worker-selenium:chrome-novnc
-          - dockerfile: Dockerfile.ubuntu
+          - dockerfile: Dockerfile.trixie
             browser_type: ""
             name: debian-novnc
             tag: rpa-worker-selenium:debian-novnc
