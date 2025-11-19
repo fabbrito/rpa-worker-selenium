@@ -212,6 +212,232 @@ def test_firefox_webdriver():
         traceback.print_exc()
         return False
 
+def test_firefox_progressive():
+    """
+    Teste progressivo do Firefox:
+      1) Binário Firefox em headless via CLI
+      2) WebDriver Firefox em headless
+      3) WebDriver Firefox em modo headful (se DISPLAY disponível)
+    """
+    print("\n==============================")
+    print("Teste progressivo: Firefox")
+    print("==============================")
+
+    results = {
+        "cli_headless": None,
+        "webdriver_headless": None,
+        "webdriver_headful": None,
+    }
+
+    # ---------------------------------------------------------
+    # 0. Verificar presença de Firefox e GeckoDriver
+    # ---------------------------------------------------------
+    print("\n[Etapa 0] Verificando binários Firefox e GeckoDriver...")
+    if not check_driver_available("GeckoDriver", "geckodriver"):
+        print("  ⚠ GeckoDriver não disponível. Abortando testes do Firefox.")
+        return results
+
+    if not check_browser_available("Firefox", "firefox"):
+        print("  ⚠ Firefox não disponível. Abortando testes do Firefox.")
+        return results
+
+    # ---------------------------------------------------------
+    # 1. Teste CLI: Firefox headless sem Selenium
+    # ---------------------------------------------------------
+    print("\n[Etapa 1] Testando Firefox headless via CLI (sem Selenium)...")
+    try:
+        # Versão
+        cmd_version = ["firefox", "--headless", "--version"]
+        print(f"  → Executando: {' '.join(cmd_version)}")
+        proc = subprocess.run(cmd_version, capture_output=True, text=True, timeout=15)
+        print("  → stdout:", proc.stdout.strip())
+        print("  → stderr:", proc.stderr.strip())
+        if proc.returncode != 0:
+            print(f"  ✗ Firefox headless falhou (code={proc.returncode})")
+            results["cli_headless"] = False
+            # Se o binário já falha aqui, nem adianta testar WebDriver
+            return results
+        else:
+            print("  ✓ Firefox headless (CLI) OK")
+            results["cli_headless"] = True
+
+        # Screenshot simples para validar renderização
+        test_png = "/tmp/firefox_cli_test.png"
+        cmd_ss = ["firefox", "--headless", "--screenshot", test_png, "https://example.com"]
+        print(f"  → Executando: {' '.join(cmd_ss)}")
+        proc2 = subprocess.run(cmd_ss, capture_output=True, text=True, timeout=30)
+        print("  → stdout:", proc2.stdout.strip())
+        print("  → stderr:", proc2.stderr.strip())
+        if proc2.returncode == 0 and os.path.exists(test_png):
+            print("  ✓ Screenshot headless gerado com sucesso:", test_png)
+        else:
+            print("  ⚠ Screenshot não gerado, mas Firefox pelo menos executou.")
+    except Exception as e:
+        print(f"  ✗ Erro ao executar Firefox via CLI: {e}")
+        results["cli_headless"] = False
+        return results
+
+    # ---------------------------------------------------------
+    # 2. WebDriver em headless
+    # ---------------------------------------------------------
+    print("\n[Etapa 2] Testando Firefox WebDriver em modo headless...")
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.firefox.options import Options
+        from selenium.webdriver.firefox.service import Service
+
+        firefox_options = Options()
+        firefox_options.add_argument("--headless")
+        firefox_options.add_argument("--width=1366")
+        firefox_options.add_argument("--height=768")
+        # Garante que está usando o binário que você instalou
+        firefox_options.binary_location = "/usr/local/bin/firefox"
+
+        # Descobrir caminho do geckodriver
+        geckodriver_path = None
+        for path in ["/usr/local/bin/geckodriver", "/usr/bin/geckodriver"]:
+            if os.path.exists(path):
+                geckodriver_path = path
+                break
+
+        log_file = "/app/logs/geckodriver_headless.log"
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
+        if geckodriver_path:
+            print(f"  → Usando geckodriver em: {geckodriver_path}")
+            service = Service(
+                executable_path=geckodriver_path,
+                log_output=open(log_file, "w")
+            )
+        else:
+            print("  → Usando geckodriver do PATH (sem caminho explícito)")
+            service = Service(log_output=open(log_file, "w"))
+
+        print("  → Inicializando WebDriver Firefox (headless)...")
+        driver = webdriver.Firefox(service=service, options=firefox_options)
+
+        try:
+            test_html = tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False)
+            test_html.write(
+                "<html><head><title>Firefox WebDriver Test</title></head>"
+                "<body><h1>Test Page</h1></body></html>"
+            )
+            test_html.close()
+
+            print("  → Carregando página de teste (file://)...")
+            driver.get(f"file://{test_html.name}")
+            title = driver.title
+            os.unlink(test_html.name)
+
+            print(f"  → Título da página: {title}")
+
+            if "Firefox WebDriver Test" in title:
+                print("  ✓ WebDriver Firefox (headless) OK")
+                results["webdriver_headless"] = True
+            else:
+                print("  ✗ Título inesperado")
+                results["webdriver_headless"] = False
+
+        finally:
+            driver.quit()
+            print("  → WebDriver Firefox (headless) fechado")
+
+    except Exception as e:
+        print(f"  ✗ WebDriver Firefox headless falhou: {e}")
+        import traceback
+        traceback.print_exc()
+        print("  ↳ Verifique o log:", "/app/logs/geckodriver_headless.log")
+        results["webdriver_headless"] = False
+
+    # Se já falhou no headless, podemos tentar headful pra comparar
+    # ---------------------------------------------------------
+    # 3. WebDriver em modo headful (se DISPLAY disponível)
+    # ---------------------------------------------------------
+    display = os.environ.get("DISPLAY")
+    if not display:
+        print("\n[Etapa 3] DISPLAY não definido. Pulando teste headful.")
+        results["webdriver_headful"] = None
+        return results
+
+    print(f"\n[Etapa 3] Testando Firefox WebDriver em modo headful (DISPLAY={display})...")
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.firefox.options import Options
+        from selenium.webdriver.firefox.service import Service
+
+        firefox_options = Options()
+        # Sem --headless aqui
+        firefox_options.binary_location = "/usr/local/bin/firefox"
+
+        geckodriver_path = None
+        for path in ["/usr/local/bin/geckodriver", "/usr/bin/geckodriver"]:
+            if os.path.exists(path):
+                geckodriver_path = path
+                break
+
+        log_file = "/app/logs/geckodriver_headful.log"
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
+        if geckodriver_path:
+            print(f"  → Usando geckodriver em: {geckodriver_path}")
+            service = Service(
+                executable_path=geckodriver_path,
+                log_output=open(log_file, "w")
+            )
+        else:
+            service = Service(log_output=open(log_file, "w"))
+
+        print("  → Inicializando WebDriver Firefox (headful)...")
+        driver = webdriver.Firefox(service=service, options=firefox_options)
+
+        try:
+            test_html = tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False)
+            test_html.write(
+                "<html><head><title>Firefox WebDriver Headful Test</title></head>"
+                "<body><h1>Test Page</h1></body></html>"
+            )
+            test_html.close()
+
+            print("  → Carregando página de teste (file://)...")
+            driver.get(f"file://{test_html.name}")
+            title = driver.title
+            os.unlink(test_html.name)
+
+            print(f"  → Título da página: {title}")
+
+            if "Firefox WebDriver Headful Test" in title:
+                print("  ✓ WebDriver Firefox (headful) OK")
+                results["webdriver_headful"] = True
+            else:
+                print("  ✗ Título inesperado")
+                results["webdriver_headful"] = False
+
+        finally:
+            driver.quit()
+            print("  → WebDriver Firefox (headful) fechado")
+
+    except Exception as e:
+        print(f"  ✗ WebDriver Firefox headful falhou: {e}")
+        import traceback
+        traceback.print_exc()
+        print("  ↳ Verifique o log:", "/app/logs/geckodriver_headful.log")
+        results["webdriver_headful"] = False
+
+    # ---------------------------------------------------------
+    # Sumário
+    # ---------------------------------------------------------
+    print("\nResumo Firefox (progressivo):")
+    for stage, result in results.items():
+        if result is True:
+            status = "✓ OK"
+        elif result is False:
+            status = "✗ FALHOU"
+        else:
+            status = "⚠ PULADO"
+        print(f"  {stage}: {status}")
+
+    return results
+
 
 def test_brave_webdriver():
     """Test Brave with regular Selenium WebDriver (not SeleniumBase)."""
@@ -351,7 +577,7 @@ def main():
     
     # Test each browser with regular Selenium WebDriver
     results['chrome_webdriver'] = test_chrome_webdriver()
-    results['firefox_webdriver'] = test_firefox_webdriver()
+    results['firefox_webdriver'] = test_firefox_progressive() #test_firefox_webdriver()
     results['brave_webdriver'] = test_brave_webdriver()
     
     # Test SeleniumBase - commented out for now due to initialization hangs
