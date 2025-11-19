@@ -102,9 +102,9 @@ RUN ln -sf /usr/bin/chromium /usr/bin/google-chrome \
 
 # Create Chrome/Chromium policy directory for AutoSelectCertificateForUrls
 # Python will write JSON policy files here at runtime
-# Set permissions to allow writing without sudo
+# Running as root by default, so standard permissions are sufficient
 RUN mkdir -p /etc/opt/chrome/policies/managed \
-    && chmod 777 /etc/opt/chrome/policies/managed
+    && chmod 755 /etc/opt/chrome/policies/managed
 
 # Create working directory structure
 WORKDIR /app

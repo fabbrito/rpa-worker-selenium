@@ -193,9 +193,10 @@ RUN mkdir -p /app/.pki /root/.pki \
 
 # Create Chrome policy directory for AutoSelectCertificateForUrls
 # Python will write JSON policy files here at runtime
-# Set permissions to allow both root and rpauser to write without sudo
+# Set ownership to rpauser to allow direct write access without sudo
 RUN mkdir -p /etc/opt/chrome/policies/managed \
-    && chmod 777 /etc/opt/chrome/policies/managed
+    && chown -R rpauser:rpauser /etc/opt/chrome/policies/managed \
+    && chmod 755 /etc/opt/chrome/policies/managed
 
 # Set up OpenBox configuration to prevent menu warnings
 RUN mkdir -p /var/lib/openbox && \
