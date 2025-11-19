@@ -150,8 +150,8 @@ RUN if [ "$BROWSER_TYPE" = "chrome" ] && [ -s /tmp/chrome.deb ]; then \
         rm -f /tmp/chrome.deb; \
     fi
 
-# Create non-root rpa user with sudo access for Chrome policy management
-# The rpauser can write to /etc/opt/chrome/policies/managed/ via sudo (needed for certificate policies)
+# Create non-root rpa user with sudo access
+# The rpauser owns /etc/opt/chrome/policies/managed/ for direct write access (certificate policies)
 RUN useradd -m -d /app -u 1000 rpauser \
  && echo "rpauser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
