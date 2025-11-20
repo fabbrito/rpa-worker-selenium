@@ -36,6 +36,22 @@ def check_driver_available(driver_name: str, command: str) -> bool:
         print(f"  ✗ Error checking {driver_name}: {e}")
         return False
 
+def has_x_server(display: str) -> bool:
+    if not display:
+        return False
+    try:
+        proc = subprocess.run(
+            ["xdpyinfo", "-display", display],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+        return proc.returncode == 0
+    except FileNotFoundError:
+        # xdpyinfo não instalado => assume que não tem X
+        return False
+    except Exception:
+        return False
 
 def check_browser_available(browser_name: str, command: str) -> bool:
     """Check if a browser binary is available."""
@@ -354,8 +370,8 @@ def test_firefox_progressive():
     # 3. WebDriver em modo headful (se DISPLAY disponível)
     # ---------------------------------------------------------
     display = os.environ.get("DISPLAY")
-    if not display:
-        print("\n[Etapa 3] DISPLAY não definido. Pulando teste headful.")
+    if not has_x_server(display):
+        print("\n[Etapa 3] Nenhum servidor X detectado. Pulando teste headful.")
         results["webdriver_headful"] = None
         return results
 
