@@ -256,6 +256,10 @@ ENV USE_XVFB=0 \
     RECORDING_DIR=/app/recordings \
     XDG_CACHE_HOME=/app/.cache
 
+# Pre-download drivers as root
+RUN python -c "from seleniumbase import Driver; d = Driver(uc=True, incognito=True, headless=True); \
+    d.get('https://www.n3wizards.com/health'); print(d.title); d.quit()" || true
+
 # Run as root user (rpauser kept for compatibility but not used)
 # USER rpauser
 
