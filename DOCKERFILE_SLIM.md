@@ -25,6 +25,7 @@
 
 ### 5. **Build Tools Cleanup**
 - `build-essential` and `python3-dev` are purged after pip install
+- `python3-tk` is retained for PyAutoGUI runtime support
 - Significantly reduces final image size
 
 ### 6. **Cache Cleanup**
@@ -45,6 +46,7 @@ The default build (`docker build -f dockerfile.slim -t image .`) includes:
 - Python 3.12 (Debian Trixie default)
 - Virtual environment (`/opt/venv`) for PEP 668 compliance
 - All packages from `requirements.txt` (Selenium, SeleniumBase, etc.)
+- Tkinter support for PyAutoGUI mouse/keyboard automation
 
 ✅ **GUI/X11 Support:**
 - Xvfb (virtual display)
