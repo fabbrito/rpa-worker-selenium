@@ -156,8 +156,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # D-Bus for inter-process communication (critical for dialogs)
     dbus \
     dbus-x11 \
-    # Java runtime for PJeOffice and other Java-based signers
-    openjdk-21-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================================================
@@ -242,8 +240,8 @@ RUN mkdir -p /app/src /app/logs /app/tmp /app/recordings \
     && chmod 1777 /app/tmp \
     && chmod 700 /app/.pki/nssdb \
     && chmod 700 /root/.pki/nssdb \
-    && chmod 755 /data \
-    && chmod 755 /app/recordings \
+    && chmod 777 /data \
+    && chmod 777 /app/recordings \
     && chown -R rpauser:rpauser /app
 
 # =============================================================================
@@ -275,13 +273,13 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
 
 # Set up OpenBox configuration to prevent menu warnings
 RUN mkdir -p /var/lib/openbox && \
-    echo '<?xml version="1.0" encoding="UTF-8"?>' > /var/lib/openbox/debian-menu.xml && \ 
-    echo '<openbox_menu xmlns="http://openbox.org/3.4/menu">' >> /var/lib/openbox/debian-menu.xml && \ 
-    echo '    <menu id="root-menu" label="Openbox 3">' >> /var/lib/openbox/debian-menu.xml && \ 
-    echo '        <item label="Terminal">' >> /var/lib/openbox/debian-menu.xml && \ 
-    echo '            <action name="Execute"><command>xterm</command></action>' >> /var/lib/openbox/debian-menu.xml && \ 
-    echo '        </item>' >> /var/lib/openbox/debian-menu.xml && \ 
-    echo '    </menu>' >> /var/lib/openbox/debian-menu.xml && \ 
+    echo '<?xml version="1.0" encoding="UTF-8"?>' > /var/lib/openbox/debian-menu.xml && \
+    echo '<openbox_menu xmlns="http://openbox.org/3.4/menu">' >> /var/lib/openbox/debian-menu.xml && \
+    echo '    <menu id="root-menu" label="Openbox 3">' >> /var/lib/openbox/debian-menu.xml && \
+    echo '        <item label="Terminal">' >> /var/lib/openbox/debian-menu.xml && \
+    echo '            <action name="Execute"><command>xterm</command></action>' >> /var/lib/openbox/debian-menu.xml && \
+    echo '        </item>' >> /var/lib/openbox/debian-menu.xml && \
+    echo '    </menu>' >> /var/lib/openbox/debian-menu.xml && \
     echo '</openbox_menu>' >> /var/lib/openbox/debian-menu.xml && \
     chmod 644 /var/lib/openbox/debian-menu.xml
 
@@ -303,6 +301,10 @@ RUN if [ "$BUILD_PJEOFFICE" = "1" ]; then \
     mkdir -p /app/.pjeoffice-pro && \
     chown -R rpauser:rpauser /app/.pjeoffice-pro && \
     chmod -R 755 /app/.pjeoffice-pro; \
+    echo "Installing Java..."; \
+    apt-get update && apt-get install -y --no-install-recommends \
+        openjdk-21-jre-headless \
+    && rm -rf /var/lib/apt/lists/*; \
 fi
 
 # Install Python dependencies (using virtual environment)
