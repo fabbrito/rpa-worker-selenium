@@ -156,6 +156,10 @@ jobs:
             browser_type: ""
             name: alpine
             tag: rpa-worker-selenium:alpine
+          - dockerfile: dockerfile.slim
+            browser_type: ""
+            name: slim
+            tag: rpa-worker-selenium:slim
     
     steps:
     - name: Checkout code
@@ -227,6 +231,10 @@ jobs:
             browser_type: ""
             name: debian-pjeoffice
             tag: rpa-worker-selenium:debian-pje
+          - dockerfile: dockerfile.slim
+            browser_type: ""
+            name: slim-pjeoffice
+            tag: rpa-worker-selenium:slim-pje
     
     steps:
     - name: Checkout code
@@ -355,6 +363,11 @@ jobs:
             browser_type: ""
             name: debian-novnc
             tag: rpa-worker-selenium:debian-novnc
+          - dockerfile: dockerfile.slim
+            browser_type: ""
+            name: slim-debug
+            tag: rpa-worker-selenium:slim-debug
+            build_args: "--build-arg ENABLE_VNC=1 --build-arg ENABLE_NOVNC=1 --build-arg ENABLE_FFMPEG=1 --build-arg ENABLE_PDF_TOOLS=1"
     
     steps:
     - name: Checkout code
@@ -367,6 +380,8 @@ jobs:
       run: |
         if [ -n "${{ matrix.browser_type }}" ]; then
           docker build -f ${{ matrix.dockerfile }} --build-arg BROWSER_TYPE=${{ matrix.browser_type }} -t ${{ matrix.tag }} .
+        elif [ -n "${{ matrix.build_args }}" ]; then
+          docker build -f ${{ matrix.dockerfile }} ${{ matrix.build_args }} -t ${{ matrix.tag }} .
         else
           docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.tag }} .
         fi

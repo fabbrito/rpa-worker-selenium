@@ -4,25 +4,27 @@
 
 A production-ready Docker image for running dynamic Python scripts with Selenium automation. This image uses optimized builds with cache mounts and comes pre-configured with Chrome, ChromeDriver, and comprehensive dependencies for web automation and RPA tasks.
 
-> **Note**: This repository provides four Dockerfile versions:
-> - `Dockerfile` (unified) - **NEW** Multi-browser support with build arg (Chrome or Brave)
+> **Note**: This repository provides five Dockerfile versions:
+> - **`dockerfile.slim`** ⭐ **NEW** - Optimized Debian Trixie with conditional features (recommended)
+> - `Dockerfile` (unified) - Multi-browser support with build arg (Chrome or Brave)
 > - `Dockerfile.firefox` - Uses Firefox browser with GeckoDriver for Mozilla automation
-> - `Dockerfile.trixie` - **UPDATED** Debian Trixie-based with Chrome + Firefox ESR + comprehensive GUI/window management + noVNC
+> - `Dockerfile.trixie` - Debian Trixie-based with Chrome + Firefox ESR + comprehensive GUI/window management + noVNC
 > - `Dockerfile.alpine` - Lightweight for serverless (Lambda, Cloud Run) - Chromium & Firefox ESR
 > 
 > See [DOCKERFILE_VERSIONS.md](DOCKERFILE_VERSIONS.md) for details on which to use.
 
 ## Features
 
-- 🐍 Python 3.11 on Debian Bookworm
+- 🚀 **NEW**: `dockerfile.slim` - Optimized image with conditional features (44% smaller)
+- 🐍 Python 3.12 on Debian Trixie (slim variant)
 - 🌐 Selenium WebDriver & SeleniumBase
-- 🚀 **NEW**: Unified Dockerfile with multi-browser support (Chrome, Brave)
+- 🎛️ **NEW**: Build-time flags for VNC, FFmpeg, noVNC, PDF tools (pay only for what you use)
 - 📦 ChromeDriver (automatically matched to stable Chrome version)
-- 🦊 **NEW**: Firefox ESR support in Debian Trixie image
+- 🦊 Firefox ESR + GeckoDriver support
 - 🔐 Certificate support for .pfx files (CA/A1 tokens) with initialized NSS database
-- 🔒 **NEW**: Runtime CA certificate management (install, list, remove)
+- 🔒 Runtime CA certificate management (install, list, remove)
 - 🖥️ Optional Xvfb (virtual display), OpenBox window manager, and VNC support
-- 🎥 Optional screen recording with FFmpeg for debugging
+- 🎥 Optional screen recording with FFmpeg (conditional install)
 - ⚖️ Optional PJeOffice support (for Brazilian legal system automations)
 - 🔧 Pre-configured for RPA and automation tasks
 - 📊 Comprehensive packages: requests, beautifulsoup4, pandas, openpyxl, PyAutoGUI, and more
@@ -36,10 +38,25 @@ A production-ready Docker image for running dynamic Python scripts with Selenium
 
 ### Building the Docker Image
 
-**Default (Chrome):**
+**Optimized Slim (Recommended) ⭐:**
 ```bash
 git clone https://github.com/nailtongomes/rpa-worker-selenium.git
 cd rpa-worker-selenium
+
+# Minimal build (~2-2.5 GB)
+DOCKER_BUILDKIT=1 docker build -f dockerfile.slim -t rpa-worker-selenium-slim .
+
+# With debug features (~3.5-4 GB)
+DOCKER_BUILDKIT=1 docker build -f dockerfile.slim \
+  --build-arg ENABLE_VNC=1 \
+  --build-arg ENABLE_NOVNC=1 \
+  --build-arg ENABLE_FFMPEG=1 \
+  --build-arg ENABLE_PDF_TOOLS=1 \
+  -t rpa-worker-selenium-slim-debug .
+```
+
+**Default (Chrome):**
+```bash
 DOCKER_BUILDKIT=1 docker build -t rpa-worker-selenium .
 ```
 
@@ -58,7 +75,7 @@ DOCKER_BUILDKIT=1 docker build -f Dockerfile.firefox -t rpa-worker-selenium-fire
 DOCKER_BUILDKIT=1 docker build -f Dockerfile.trixie -t rpa-worker-selenium-debian .
 ```
 
-**Alpine (Lightweight for Serverless) ⭐:**
+**Alpine (Lightweight for Serverless):**
 ```bash
 DOCKER_BUILDKIT=1 docker build -f Dockerfile.alpine -t rpa-worker-selenium-alpine .
 ```
