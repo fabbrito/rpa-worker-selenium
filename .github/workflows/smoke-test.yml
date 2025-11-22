@@ -227,7 +227,7 @@ jobs:
             browser_type: ""
             name: debian-pjeoffice
             tag: rpa-worker-selenium:debian-pje
-          - dockerfile: dockerfile.slim
+          - dockerfile: Dockerfile.slim
             browser_type: ""
             name: slim-pjeoffice
             tag: rpa-worker-selenium:slim-pje
@@ -359,7 +359,7 @@ jobs:
             browser_type: ""
             name: debian-novnc
             tag: rpa-worker-selenium:debian-novnc
-          - dockerfile: dockerfile.slim
+          - dockerfile: Dockerfile.slim
             browser_type: ""
             name: slim-debug
             tag: rpa-worker-selenium:slim-debug
