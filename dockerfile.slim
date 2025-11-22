@@ -28,17 +28,17 @@ WORKDIR /downloads
 
 # Download Chrome and ChromeDriver from Chrome for Testing
 RUN curl -Lo "chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip" \
- && curl -Lo "chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chrome-linux64.zip" \
- && unzip chromedriver-linux64.zip \
- && unzip chrome-linux64.zip \
- && rm -f chromedriver-linux64.zip chrome-linux64.zip
+    && curl -Lo "chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chrome-linux64.zip" \
+    && unzip chromedriver-linux64.zip \
+    && unzip chrome-linux64.zip \
+    && rm -f chromedriver-linux64.zip chrome-linux64.zip
 
 # Download Firefox ESR and GeckoDriver
 RUN curl --retry 5 --retry-delay 10 -Lo "firefox.tar.bz2" \
     "https://download.mozilla.org/?product=firefox-esr-latest-ssl&os=linux64&lang=en-US" \
     && tar -xf firefox.tar.bz2 \
     && rm -f firefox.tar.bz2 \
- && curl --retry 5 --retry-delay 10 -Lo "geckodriver.tar.gz" \
+    && curl --retry 5 --retry-delay 10 -Lo "geckodriver.tar.gz" \
     "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
     && tar -zxf geckodriver.tar.gz \
     && rm -f geckodriver.tar.gz
@@ -242,8 +242,8 @@ RUN mkdir -p /app/src /app/logs /app/tmp /app/recordings \
     && chmod 1777 /app/tmp \
     && chmod 700 /app/.pki/nssdb \
     && chmod 700 /root/.pki/nssdb \
-    && chmod 777 /data \
-    && chmod 777 /app/recordings \
+    && chmod 755 /data \
+    && chmod 755 /app/recordings \
     && chown -R rpauser:rpauser /app
 
 # =============================================================================
@@ -309,7 +309,7 @@ fi
 COPY requirements.txt .
 RUN pip install --upgrade --no-cache-dir pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && chmod -R 777 /opt/venv/lib/python*/site-packages/seleniumbase/drivers || true \
+    && chmod -R 755 /opt/venv/lib/python*/site-packages/seleniumbase/drivers || true \
     && rm -rf /root/.cache/pip
 
 # ============================================================================
@@ -376,7 +376,8 @@ ENV USE_XVFB=0 \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD chrome --version && firefox --version || exit 1
 
-# Pre-download drivers as root
+# Pre-download drivers as root (optional - fails gracefully in restricted networks)
+# This warms up the SeleniumBase driver cache for faster first-run performance
 RUN python -c "from seleniumbase import Driver; d = Driver(uc=True, incognito=True, headless=True); \
     d.get('https://www.n3wizards.com/health'); print(d.title); d.quit()" || true
 
