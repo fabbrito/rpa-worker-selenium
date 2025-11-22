@@ -379,7 +379,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Pre-download drivers as root (optional - fails gracefully in restricted networks)
 # This warms up the SeleniumBase driver cache for faster first-run performance
 RUN python -c "from seleniumbase import Driver; d = Driver(uc=True, incognito=True, headless=True); \
-    d.get('https://www.n3wizards.com/health'); print(d.title); d.quit()" || true
+    d.get('about:blank'); print(d.title); d.quit()" || true
 
 # Run as root user (rpauser kept for compatibility but not used)
 # USER rpauser
