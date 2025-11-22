@@ -156,10 +156,6 @@ jobs:
             browser_type: ""
             name: alpine
             tag: rpa-worker-selenium:alpine
-          - dockerfile: dockerfile.slim
-            browser_type: ""
-            name: slim
-            tag: rpa-worker-selenium:slim
     
     steps:
     - name: Checkout code
