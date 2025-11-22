@@ -309,7 +309,9 @@ fi
 COPY requirements.txt .
 RUN pip install --upgrade --no-cache-dir pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && chmod -R 755 /opt/venv/lib/python*/site-packages/seleniumbase/drivers || true \
+    # The seleniumbase drivers directory may not exist depending on installed packages and Python version.
+    # Only attempt to chmod if the directory exists to avoid masking permission issues.
+    && [ -d /opt/venv/lib/python*/site-packages/seleniumbase/drivers ] && chmod -R 755 /opt/venv/lib/python*/site-packages/seleniumbase/drivers \
     && rm -rf /root/.cache/pip
 
 # ============================================================================
