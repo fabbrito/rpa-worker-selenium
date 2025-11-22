@@ -1,6 +1,6 @@
 # Dockerfile Versions
 
-This repository provides four Dockerfile versions with multi-browser support:
+This repository provides five Dockerfile versions with multi-browser support:
 
 ## 1. Dockerfile (Unified - Chrome or Brave)
 
@@ -59,7 +59,100 @@ docker run --rm rpa-worker-selenium-firefox example_script_firefox.py
 - `ftp.mozilla.org` (for Firefox download)
 - `github.com` (for GeckoDriver download)
 
-## 3. Dockerfile.trixie (Debian Trixie Desktop - Enhanced GUI/Window Management + Multi-Browser)
+## 3. dockerfile.slim (Optimized Debian Trixie - Conditional Features) ⭐ NEW
+
+**Recommended for: Production deployments, cost-conscious environments, modular feature selection**
+
+**OPTIMIZED**: Significantly smaller than Dockerfile.trixie while preserving all critical functionality!
+
+- Uses `debian:trixie-slim` as base (vs full `debian:trixie`)
+- **Default build is minimal (~2-2.5 GB vs ~4 GB for Dockerfile.trixie)**
+- Multi-stage build with Chrome for Testing + Firefox ESR
+- **Build-time flags for optional features:**
+  - `ENABLE_VNC=0` (default) - Install x11vnc for remote debugging
+  - `ENABLE_FFMPEG=0` (default) - Install FFmpeg for screen recording
+  - `ENABLE_NOVNC=0` (default) - Install noVNC for browser-based VNC
+  - `ENABLE_PDF_TOOLS=0` (default) - Install ImageMagick + Ghostscript
+  - `BUILD_PJEOFFICE=0` (default) - Install PJeOffice for Brazilian legal
+- **Removed audio stack** (pulseaudio, libasound2) - focus on headless/GUI-over-X11
+- **Minimal font set** (fonts-liberation, fonts-dejavu-core only)
+- **Build tools cleaned** (build-essential, python3-dev purged after pip install)
+- Full certificate handling (A1 .pfx/.p12) with NSS tools
+- Screenshot support via Selenium (no extra packages needed)
+- Health check to verify browser availability
+- **Requires internet access to `storage.googleapis.com`, `download.mozilla.org`, `github.com` during build**
+
+**Build command (minimal - recommended):**
+```bash
+docker build -f dockerfile.slim -t rpa-worker-selenium-slim .
+```
+
+**Build command (with all debug features):**
+```bash
+docker build -f dockerfile.slim \
+  --build-arg ENABLE_VNC=1 \
+  --build-arg ENABLE_NOVNC=1 \
+  --build-arg ENABLE_FFMPEG=1 \
+  --build-arg ENABLE_PDF_TOOLS=1 \
+  -t rpa-worker-selenium-slim-debug .
+```
+
+**Build with PJeOffice:**
+```bash
+docker build -f dockerfile.slim \
+  --build-arg BUILD_PJEOFFICE=1 \
+  -t rpa-worker-selenium-slim-pje .
+```
+
+**Example usage (minimal):**
+```bash
+# Basic headless automation
+docker run --rm rpa-worker-selenium-slim python /app/example_script.py
+
+# With virtual display for screenshots
+docker run --rm -e USE_XVFB=1 rpa-worker-selenium-slim python /app/script.py
+```
+
+**Example usage (with debug features):**
+```bash
+# With VNC debugging
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_VNC=1 \
+  -p 5900:5900 \
+  rpa-worker-selenium-slim-debug python /app/script.py
+
+# With noVNC (browser-based VNC)
+docker run --rm \
+  -e USE_XVFB=1 \
+  -e USE_VNC=1 \
+  -e USE_NOVNC=1 \
+  -p 6080:6080 \
+  rpa-worker-selenium-slim-debug python /app/script.py
+# Access via: http://localhost:6080/vnc.html
+```
+
+**Key advantages:**
+- ✅ **44% smaller** than Dockerfile.trixie (default build)
+- ✅ **Pay only for what you use** - enable features as needed
+- ✅ Same functionality as Dockerfile.trixie when all features enabled
+- ✅ Perfect for production (minimal) and development (with debug args)
+- ✅ Faster builds (fewer packages to install)
+- ✅ Lower storage and bandwidth costs
+- ✅ Compatible with all existing automation scripts
+
+**When to use:**
+- ✅ Production deployments where size matters
+- ✅ CI/CD pipelines (build minimal for prod, full for dev)
+- ✅ Cost-conscious cloud environments
+- ✅ When you want fine-grained control over features
+- ✅ When you only need VNC/recording occasionally
+
+**See also:**
+- [DOCKERFILE_SLIM.md](DOCKERFILE_SLIM.md) - Detailed documentation
+- [DOCKERFILE_SLIM_EXAMPLES.md](DOCKERFILE_SLIM_EXAMPLES.md) - Build examples and use cases
+
+## 4. Dockerfile.trixie (Debian Trixie Desktop - Enhanced GUI/Window Management + Multi-Browser)
 
 **Recommended for: PJeOffice certificate dialogs, complex window interactions, GUI automation, robust graphical worker with noVNC**
 
@@ -136,7 +229,7 @@ docker run --rm \
   - You need both Chrome and Firefox in the same image
   - Image size is less important than compatibility and feature completeness
 
-## 4. Dockerfile.alpine (Lightweight Serverless - Chromium & Firefox)
+## 5. Dockerfile.alpine (Lightweight Serverless - Chromium & Firefox)
 
 **Recommended for: Serverless environments (AWS Lambda, Google Cloud Run), minimal footprint, cost optimization**
 
@@ -193,10 +286,22 @@ docker run --rm -v $(pwd)/data:/data rpa-worker-selenium-alpine python /app/alpi
 | `Dockerfile` (Chrome) | Production, PJeOffice | Medium | Chrome (Latest) | Yes | Medium |
 | `Dockerfile` (Brave) | Privacy, Ad-blocking | Medium | Brave | Yes | Medium |
 | `Dockerfile.firefox` | Firefox Testing | Medium | Firefox | Yes | Medium |
-| `Dockerfile.trixie` | PJeOffice, Java Signers, noVNC | Large | **Chrome + Firefox ESR** | **Full (Debian Trixie)** | Slow |
-| `Dockerfile.alpine` | Serverless, Lambda | **Small** | Chromium & Firefox | No | Fast |
+| **`dockerfile.slim`** ⭐ | **Production, Cost-saving** | **Small-Large** | **Chrome + Firefox ESR** | **Yes** | **Fast-Medium** |
+| `Dockerfile.trixie` | PJeOffice, Full Features | Large | Chrome + Firefox ESR | Full (Debian Trixie) | Slow |
+| `Dockerfile.alpine` | Serverless, Lambda | **Smallest** | Chromium & Firefox | No | Fast |
+
+**Note:** `dockerfile.slim` size varies: ~2-2.5 GB (minimal) to ~3.5-4 GB (all features enabled)
 
 ### Detailed Decision Guide
+
+- **Use `dockerfile.slim`** ⭐ **NEW** if:
+  - You want a smaller image for production (~2-2.5 GB vs ~4 GB)
+  - You want to control which features are installed (VNC, FFmpeg, noVNC, PDF tools)
+  - You need Chrome + Firefox ESR in the same image
+  - You want the flexibility to build minimal (prod) or full (dev) images
+  - You're cost-conscious about storage and bandwidth
+  - You want faster builds and deployments
+  - **This is the recommended choice for most use cases**
 
 - **Use `Dockerfile` (Chrome)** if:
   - You're deploying to production
