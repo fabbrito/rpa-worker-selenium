@@ -1,0 +1,23 @@
+services:
+  rpa-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.trixie
+      args:
+        BUILD_PJEOFFICE: 1
+    user: "0"
+    shm_size: 2g
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2g
+    environment:
+      - SCRIPT_URL=${SCRIPT_URL}
+      - USE_XVFB=${USE_XVFB:-1}
+      - USE_OPENBOX=${USE_OPENBOX:-1}
+      - USE_PJEOFFICE=${USE_PJEOFFICE:-1}
+      - USE_NOVNC=${USE_NOVNC:-0}
+      - USE_VNC=${USE_VNC:-0}
+      - USE_SCREEN_RECORDING=${USE_SCREEN_RECORDING:-0}
+      - DISPLAY=:99
