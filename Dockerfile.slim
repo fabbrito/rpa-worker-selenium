@@ -54,6 +54,7 @@ ARG ENABLE_VNC=0
 ARG ENABLE_FFMPEG=0
 ARG ENABLE_NOVNC=0
 ARG ENABLE_PDF_TOOLS=0
+ARG CHROME_PROFILE_URL=
 
 LABEL maintainer="nailtongsilva@gmail.com" \
       version="4.0-slim" \
@@ -212,6 +213,15 @@ RUN ln -s /opt/chrome/chrome /usr/local/bin/chrome \
     && ln -s /opt/chrome/chrome /usr/local/bin/google-chrome \
     && chmod +x /usr/local/bin/chromedriver \
     && chmod +x /opt/chrome/chrome
+
+# Optional: Download Chrome profile zip from URL
+# When CHROME_PROFILE_URL is provided, downloads the .zip file to /usr/local/share/ProfileChrome-slim.zip
+# This allows scripts to use a pre-configured Chrome profile with extensions
+RUN if [ -n "$CHROME_PROFILE_URL" ]; then \
+    echo "Downloading Chrome profile from $CHROME_PROFILE_URL..."; \
+    curl -fsSL "$CHROME_PROFILE_URL" -o /usr/local/share/ProfileChrome-slim.zip && \
+    echo "Chrome profile downloaded to /usr/local/share/ProfileChrome-slim.zip"; \
+fi
 
 # Create symbolic links and set permissions for Firefox
 RUN ln -s /opt/firefox/firefox /usr/local/bin/firefox \

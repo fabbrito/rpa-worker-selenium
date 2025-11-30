@@ -163,6 +163,46 @@ docker build -f dockerfile.slim --build-arg BUILD_PJEOFFICE=1 -t image-with-pje 
 docker run --rm -e USE_XVFB=1 -e USE_OPENBOX=1 -e USE_PJEOFFICE=1 image-with-pje script.py
 ```
 
+---
+
+### 6. Chrome Profile (`CHROME_PROFILE_URL`)
+**Default:** `` (empty - disabled)
+
+When provided, downloads a .zip file containing a pre-configured Chrome profile with extensions and settings.
+
+**Use case:** Automations that require specific Chrome extensions or custom settings
+
+**Build command:**
+```bash
+docker build -f dockerfile.slim \
+  --build-arg CHROME_PROFILE_URL=https://example.com/profile.zip \
+  -t image-with-profile .
+```
+
+**Profile location:** `/usr/local/share/ProfileChrome-slim.zip`
+
+**Usage in Python:**
+```python
+import zipfile
+import os
+
+# Extract the profile
+profile_zip = "/usr/local/share/ProfileChrome-slim.zip"
+profile_dir = "/tmp/chrome-profile"
+
+if os.path.exists(profile_zip):
+    with zipfile.ZipFile(profile_zip, 'r') as zip_ref:
+        zip_ref.extractall(profile_dir)
+
+# Use with Selenium
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.add_argument(f"--user-data-dir={profile_dir}")
+driver = webdriver.Chrome(options=options)
+```
+
 ## Build Examples
 
 ### Minimal Build (Default)

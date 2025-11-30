@@ -43,6 +43,7 @@ FROM python:3.11-slim-bookworm
 # Build arguments
 ARG BUILD_PJEOFFICE=0
 ARG BROWSER_TYPE=chrome
+ARG CHROME_PROFILE_URL=
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -149,6 +150,15 @@ RUN if [ "$BROWSER_TYPE" = "chrome" ] && [ -s /tmp/chrome.deb ]; then \
     else \
         rm -f /tmp/chrome.deb; \
     fi
+
+# Optional: Download Chrome profile zip from URL
+# When CHROME_PROFILE_URL is provided, downloads the .zip file to /usr/local/share/ProfileChrome-slim.zip
+# This allows scripts to use a pre-configured Chrome profile with extensions
+RUN if [ -n "$CHROME_PROFILE_URL" ]; then \
+    echo "Downloading Chrome profile from $CHROME_PROFILE_URL..."; \
+    curl -fsSL "$CHROME_PROFILE_URL" -o /usr/local/share/ProfileChrome-slim.zip && \
+    echo "Chrome profile downloaded to /usr/local/share/ProfileChrome-slim.zip"; \
+fi
 
 # Create non-root rpa user with sudo access
 # The rpauser owns /etc/opt/chrome/policies/managed/ for direct write access (certificate policies)

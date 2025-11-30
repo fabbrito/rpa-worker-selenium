@@ -22,6 +22,14 @@ docker build --build-arg BROWSER_TYPE=chrome -t rpa-worker-selenium .
 docker build --build-arg BROWSER_TYPE=brave -t rpa-worker-selenium-brave .
 ```
 
+### Build with Custom Chrome Profile:
+```bash
+# Download a pre-configured Chrome profile with extensions
+docker build --build-arg CHROME_PROFILE_URL=https://example.com/profile.zip -t rpa-worker-selenium .
+```
+
+The profile will be saved to `/usr/local/share/ProfileChrome-slim.zip` and can be extracted by automation scripts to use custom extensions and settings.
+
 **Features:**
 - Multi-stage build for optimization
 - Downloads specific Chrome version or installs Brave from official repository
@@ -29,10 +37,12 @@ docker build --build-arg BROWSER_TYPE=brave -t rpa-worker-selenium-brave .
 - Optimized for PJeOffice digital signature compatibility (Chrome)
 - Enhanced privacy features and built-in ad-blocking (Brave)
 - Single Dockerfile for both browsers - reduces maintenance overhead
+- **NEW**: Optional Chrome profile download via `CHROME_PROFILE_URL` build argument
 
 **Build Requirements:**
 - Chrome: Requires internet access to `dl.google.com`, `storage.googleapis.com`, `googlechromelabs.github.io`
 - Brave: Requires internet access to `brave-browser-apt-release.s3.brave.com`, `storage.googleapis.com`, `googlechromelabs.github.io`
+- Chrome Profile: Requires internet access to the URL specified in `CHROME_PROFILE_URL` (if provided)
 
 ## 2. Dockerfile.firefox (Firefox Browser)
 
@@ -74,6 +84,7 @@ docker run --rm rpa-worker-selenium-firefox example_script_firefox.py
   - `ENABLE_NOVNC=0` (default) - Install noVNC for browser-based VNC
   - `ENABLE_PDF_TOOLS=0` (default) - Install ImageMagick + Ghostscript
   - `BUILD_PJEOFFICE=0` (default) - Install PJeOffice for Brazilian legal
+  - `CHROME_PROFILE_URL=` (optional) - URL to download a Chrome profile .zip file
 - **Removed audio stack** (pulseaudio, libasound2) - focus on headless/GUI-over-X11
 - **Minimal font set** (fonts-liberation, fonts-dejavu-core only)
 - **Build tools cleaned** (build-essential, python3-dev purged after pip install)
@@ -102,6 +113,16 @@ docker build -f dockerfile.slim \
 docker build -f dockerfile.slim \
   --build-arg BUILD_PJEOFFICE=1 \
   -t rpa-worker-selenium-slim-pje .
+```
+
+**Build with Chrome profile:**
+```bash
+docker build -f dockerfile.slim \
+  --build-arg CHROME_PROFILE_URL=https://example.com/profile.zip \
+  -t rpa-worker-selenium-slim-profile .
+```
+
+The Chrome profile will be saved to `/usr/local/share/ProfileChrome-slim.zip`.
 ```
 
 **Example usage (minimal):**
@@ -172,6 +193,7 @@ docker run --rm \
 - Larger image size but maximum compatibility
 - **Java 21 runtime for applets and PJeOffice/other Java-based signers**
 - Health check to verify browser availability
+- **Optional Chrome profile download via `CHROME_PROFILE_URL` build argument**
 - **Requires internet access to `storage.googleapis.com`, `ftp.mozilla.org`, `github.com` during build**
 
 **Build command:**
@@ -183,6 +205,15 @@ docker build -f Dockerfile.trixie -t rpa-worker-selenium-debian .
 ```bash
 docker build -f Dockerfile.trixie --build-arg BUILD_PJEOFFICE=1 -t rpa-worker-selenium-debian-pje .
 ```
+
+**Build with Chrome profile:**
+```bash
+docker build -f Dockerfile.trixie \
+  --build-arg CHROME_PROFILE_URL=https://example.com/profile.zip \
+  -t rpa-worker-selenium-debian-profile .
+```
+
+The Chrome profile will be saved to `/usr/local/share/ProfileChrome-slim.zip`.
 
 **Example usage with Chrome:**
 ```bash
