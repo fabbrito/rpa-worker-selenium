@@ -31,8 +31,6 @@
 #   SCREEN_WIDTH: Screen width for virtual display (default: 1366)
 #   SCREEN_HEIGHT: Screen height for virtual display (default: 768)
 
-version: '3.8'
-
 services:
   # RPA Worker Service
   # Each instance runs indefinitely with automatic restart

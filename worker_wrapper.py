@@ -38,8 +38,12 @@ APP_DIR = Path('/app')
 SRC_DIR = APP_DIR / 'src'
 LOGS_DIR = APP_DIR / 'logs'
 
-# Ensure logs directory exists
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
+# Ensure logs directory exists (only in Docker environment)
+try:
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+except (PermissionError, FileNotFoundError):
+    # Not in Docker environment, use current directory
+    LOGS_DIR = Path('.')
 
 
 class WorkerWrapper:

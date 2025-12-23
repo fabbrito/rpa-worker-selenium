@@ -16,6 +16,7 @@ A production-ready Docker image for running dynamic Python scripts with Selenium
 ## Features
 
 - 🚀 **NEW**: `dockerfile.slim` - Optimized image with conditional features (44% smaller)
+- 👷 **NEW**: Docker Compose workers for distributed RPA execution with auto-restart
 - 🐍 Python 3.12 on Debian Trixie (slim variant)
 - 🌐 Selenium WebDriver & SeleniumBase
 - 🎛️ **NEW**: Build-time flags for VNC, FFmpeg, noVNC, PDF tools (pay only for what you use)
@@ -141,6 +142,20 @@ docker run --rm rpa-worker-selenium your_script.py
 # Edit docker-compose.yml to specify your script
 docker-compose up
 ```
+
+#### Option 4: Use Distributed Workers ⭐ **NEW**
+
+For production RPA tasks requiring distributed execution with automatic restart:
+
+```bash
+# Start distributed workers
+docker compose -f docker-compose.worker.yml up -d --scale rpa-worker=2
+
+# View logs
+docker compose -f docker-compose.worker.yml logs -f
+```
+
+See [DOCKER_COMPOSE_WORKERS.md](DOCKER_COMPOSE_WORKERS.md) for complete worker setup guide.
 
 ## Writing Selenium Scripts
 
