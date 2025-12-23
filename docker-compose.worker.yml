@@ -23,13 +23,23 @@
 # Environment Variables:
 #   SCRIPT_NAME: Name of the Python script to run (e.g., "my_script.py")
 #                Script should be placed in ./app/src directory
+#                Used with worker_wrapper.py for time-based restarts
 #   SCRIPT_URL: Alternative to SCRIPT_NAME - URL to download script from
+#               When using SCRIPT_URL, change command to use entrypoint directly
+#               and remove SCRIPT_NAME (see commented example below)
 #   MAX_RUN_HOURS: Maximum hours before forcing container restart (default: 3)
+#                  Only applies when using worker_wrapper.py
 #   USE_XVFB: Enable virtual display (0=disabled, 1=enabled) - default 0
 #   USE_OPENBOX: Enable window manager (0=disabled, 1=enabled) - default 0
 #   USE_VNC: Enable VNC for debugging (0=disabled, 1=enabled) - default 0
 #   SCREEN_WIDTH: Screen width for virtual display (default: 1366)
 #   SCREEN_HEIGHT: Screen height for virtual display (default: 768)
+#
+# Example for using SCRIPT_URL instead of SCRIPT_NAME:
+#   1. Set SCRIPT_URL in environment section
+#   2. Comment out SCRIPT_NAME (or leave it empty)
+#   3. Change command to: command: /app/entrypoint.sh python --version
+#      (entrypoint will detect SCRIPT_URL and download/execute the script)
 
 services:
   # RPA Worker Service

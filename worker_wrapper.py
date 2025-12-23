@@ -172,11 +172,17 @@ class WorkerWrapper:
         print(f"[worker_wrapper] Start Time: {self.start_time}")
         print("=" * 80)
         
-        # If SCRIPT_URL is set, let entrypoint handle the download and execution
+        # If SCRIPT_URL is set, this is a configuration error
+        # SCRIPT_URL should be used directly with entrypoint, not with worker_wrapper
         if SCRIPT_URL:
-            print("[worker_wrapper] SCRIPT_URL detected, but this should be handled by entrypoint")
-            print("[worker_wrapper] This wrapper should not be used with SCRIPT_URL")
-            print("[worker_wrapper] Use: command: python /app/script_downloader.py")
+            print("[worker_wrapper] ERROR: SCRIPT_URL is not supported with worker_wrapper.py")
+            print("[worker_wrapper] SCRIPT_URL should be used with entrypoint directly.")
+            print("[worker_wrapper] To use SCRIPT_URL:")
+            print("[worker_wrapper]   1. Remove SCRIPT_NAME from environment")
+            print("[worker_wrapper]   2. Set SCRIPT_URL to your script URL")
+            print("[worker_wrapper]   3. Change command to: /app/entrypoint.sh python --version")
+            print("[worker_wrapper] The entrypoint will detect SCRIPT_URL and handle download/execution.")
+            print("[worker_wrapper] Note: Time-based restarts (MAX_RUN_HOURS) must be implemented in your script.")
             return 1
         
         # Find the script

@@ -105,9 +105,9 @@ docker-compose -f docker-compose.worker.yml down -v
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SCRIPT_NAME` | `worker_script.py` | Name of the Python script to run (must be in `/app/src/`) |
-| `SCRIPT_URL` | - | Alternative: URL to download script from |
-| `MAX_RUN_HOURS` | `3` | Maximum hours before forcing container restart |
+| `SCRIPT_NAME` | `worker_script.py` | Name of the Python script to run (must be in `/app/src/`). Used with worker_wrapper.py. |
+| `SCRIPT_URL` | - | Alternative: URL to download script from. **Note:** Requires changing command in docker-compose.worker.yml to use entrypoint directly. Not compatible with worker_wrapper.py. |
+| `MAX_RUN_HOURS` | `3` | Maximum hours before forcing container restart (only with worker_wrapper.py) |
 | `USE_XVFB` | `0` | Enable virtual display (0=disabled, 1=enabled) |
 | `USE_OPENBOX` | `0` | Enable window manager (0=disabled, 1=enabled) |
 | `USE_VNC` | `0` | Enable VNC for debugging (0=disabled, 1=enabled) |
@@ -280,13 +280,28 @@ This is why clean restarts are important:
 
 Download scripts dynamically from a URL:
 
-```bash
-# Set environment variable
-export SCRIPT_URL=https://example.com/scripts/my_automation.py
+**Important:** SCRIPT_URL is not compatible with worker_wrapper.py. You must modify the docker-compose.worker.yml:
 
-# Start workers
-docker-compose -f docker-compose.worker.yml up -d
+1. Edit `docker-compose.worker.yml` and change the command:
+```yaml
+# Change from:
+command: python /app/worker_wrapper.py
+
+# To:
+command: /app/entrypoint.sh python --version
 ```
+
+2. Set the SCRIPT_URL environment variable:
+```bash
+export SCRIPT_URL=https://example.com/scripts/my_automation.py
+```
+
+3. Start workers:
+```bash
+docker compose -f docker-compose.worker.yml up -d
+```
+
+**Note:** When using SCRIPT_URL, you lose the automatic time-based restart feature (MAX_RUN_HOURS). You must implement restart logic in your script if needed.
 
 ### Custom Build Args
 

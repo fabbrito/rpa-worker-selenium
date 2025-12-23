@@ -217,13 +217,28 @@ vncviewer localhost:5900
 
 ### Baixar Script de URL Dinamicamente
 
-```bash
-# Configure SCRIPT_URL ao invés de SCRIPT_NAME
-export SCRIPT_URL=https://exemplo.com/scripts/meu_rpa.py
+**Importante:** SCRIPT_URL não é compatível com worker_wrapper.py. Você deve modificar o docker-compose.worker.yml:
 
-# Inicie workers
+1. Edite `docker-compose.worker.yml` e altere o comando:
+```yaml
+# Mude de:
+command: python /app/worker_wrapper.py
+
+# Para:
+command: /app/entrypoint.sh python --version
+```
+
+2. Configure a variável de ambiente SCRIPT_URL:
+```bash
+export SCRIPT_URL=https://exemplo.com/scripts/meu_rpa.py
+```
+
+3. Inicie os workers:
+```bash
 docker compose -f docker-compose.worker.yml up -d
 ```
+
+**Nota:** Ao usar SCRIPT_URL, você perde o recurso de reinicialização automática baseada em tempo (MAX_RUN_HOURS). Você deve implementar a lógica de reinicialização no seu próprio script se necessário.
 
 ### Ajustar Limites de Recursos
 
