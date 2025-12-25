@@ -1,0 +1,50 @@
+# Simple Docker Compose for RPA Worker
+# Downloads and runs script from URL, restarts automatically when script exits
+#
+# Usage:
+#   1. Set SCRIPT_URL environment variable to your script URL
+#   2. docker compose -f docker-compose.worker.yml up -d
+#
+# Your script should:
+#   - Run for up to 1 hour (or your desired time)
+#   - Raise an error or exit to trigger container restart
+#
+# Persistent data is saved in: app/db, app/src, app/tmp, app/logs
+
+services:
+  rpa-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.trixie
+    
+    image: rpa-worker-selenium-trixie:latest
+    
+    # Auto-restart when script exits
+    restart: always
+    
+    # Volumes to persist downloads, scripts, caches, dbs, logs
+    volumes:
+      - ./app/db:/app/db          # Database files
+      - ./app/src:/app/src        # Downloaded scripts
+      - ./app/tmp:/app/tmp        # Cache and temp files
+      - ./app/logs:/app/logs      # Log files
+    
+    # Environment variables
+    environment:
+      # Set your script URL here (or use .env file)
+      - SCRIPT_URL=${SCRIPT_URL}
+      
+      # Optional: display settings (disabled by default for better performance)
+      - USE_XVFB=${USE_XVFB:-0}
+      - USE_OPENBOX=${USE_OPENBOX:-0}
+      
+      # Python settings
+      - PYTHONUNBUFFERED=1
+      - TZ=America/Sao_Paulo
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
