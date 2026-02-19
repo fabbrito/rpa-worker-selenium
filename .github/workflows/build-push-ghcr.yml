@@ -85,6 +85,8 @@ jobs:
           build-args: |
             BUILD_PJEOFFICE=1
             ENABLE_PDF_TOOLS=1
+            ENABLE_VNC=1
+            ENABLE_NOVNC=1
             CHROME_PROFILE_URL=${{ secrets.CHROME_PROFILE_URL || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
