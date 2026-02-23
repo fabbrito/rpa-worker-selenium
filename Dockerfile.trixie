@@ -7,8 +7,8 @@
 FROM debian:trixie-slim AS builder
 
 # https://googlechromelabs.github.io/chrome-for-testing/
-ARG CHROME_VERSION=145.0.7632.46 
-# last 142.0.7444.162 -- 143.0.7499.192
+ARG CHROME_VERSION=145.0.7632.77 
+# last 145.0.7632.46 -- 142.0.7444.162 -- 143.0.7499.192
 # Firefox ESR is downloaded from Mozilla's latest-esr download service (no version needed)
 
 # https://github.com/mozilla/geckodriver/releases
@@ -47,6 +47,21 @@ RUN curl --retry 5 --retry-delay 10 -Lo "firefox.tar.bz2" \
 # ---------- STAGE 2: runtime
 FROM debian:trixie
 
+# Timezone + locale Brasil
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        tzdata locales && \
+    ln -snf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
+    echo "America/Sao_Paulo" > /etc/timezone && \
+    sed -i 's/^# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=pt_BR.UTF-8
+
+ENV LANG=pt_BR.UTF-8 \
+    LANGUAGE=pt_BR:pt \
+    LC_ALL=pt_BR.UTF-8 \
+    TZ=America/Sao_Paulo
+
 # Pass build argument to runtime stage
 # Build arguments for optional features (all default to 0 for minimal image)
 ARG BUILD_PJEOFFICE=0
@@ -66,12 +81,10 @@ LABEL maintainer="nailtongsilva@gmail.com" \
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    LANG=C.UTF-8 LC_ALL=C.UTF-8 \
     DISPLAY=:99 \
     SCREEN_WIDTH=1366 \
     SCREEN_HEIGHT=768 \
     HOME=/root \
-    TZ=America/Sao_Paulo \
     MOZ_ALLOW_ROOT=1 \
     XDG_RUNTIME_DIR=/tmp/runtime-root \
     CHROME_PROFILE_URL=${CHROME_PROFILE_URL}
@@ -99,8 +112,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     x11-utils \
     x11-xserver-utils \
-    xserver-xorg-core \
-    xserver-xorg-video-dummy \
+    # xserver-xorg-core \
+    # xserver-xorg-video-dummy \
     # Window managers and desktop components
     openbox \
     xterm \
@@ -108,8 +121,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
     fonts-liberation \
     fonts-dejavu-core \
-    fonts-noto \
-    fonts-noto-color-emoji \
+    # fonts-noto \
+    # fonts-noto-color-emoji \
     # GUI libraries (comprehensive set for window handling)
     libgtk-3-0 \
     libgtk2.0-0 \
@@ -137,7 +150,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Graphics and rendering
     libgl1 \
     libglx0 \
-    libglu1-mesa \
+    # libglu1-mesa \
+    # Fonts Fingerprints
+    fonts-noto-color-emoji \
+    fonts-freefont-ttf \
+    fonts-roboto \
+    fonts-droid-fallback \
     libvulkan1 \
     # Audio support (required by some certificate dialog boxes)
     libasound2 \
@@ -151,7 +169,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Additional desktop utilities for window management
     wmctrl \
     xdotool \
-    xautomation \
+    # xautomation \
     xclip \
     # Process management
     procps \
@@ -181,7 +199,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dbus \
     dbus-x11 \
     # PolicyKit for authentication dialogs
-    polkitd \
+    # polkitd \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================================================
@@ -394,7 +412,7 @@ ENV USE_XVFB=0 \
     XDG_DATA_HOME=/root/.local/share
 
 # Health check to ensure browsers are available
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD chrome --version && firefox --version || exit 1
 
 # Pre-download drivers as root
